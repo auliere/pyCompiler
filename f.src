@@ -1,0 +1,6 @@
+i = 1*(2+3);
+if i>5:
+	print "Text 1";
+else:
+	print "Text 2";
+endif;
