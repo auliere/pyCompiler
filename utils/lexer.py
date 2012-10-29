@@ -2,13 +2,22 @@ import string
 
 from utils import ParserError
 
-def lex(text):
-    assert len(text)>0
+class Token(str):
+    def __new__(cls, val, line, *args, **kwargs):
+        s = super(Token, cls).__new__(cls, val)
+        s.line = line
+        return s
 
+def lex(text):
+    global line_num
+    assert len(text)>0
 
     NO, ALPHA, NUM, SYMB, CMDEND, QUOTE, QUOTE_end, COMMENT = range(8)
         
+    line_num = 1
+
     def typeof(s, string=False):
+        global line_num
         if s[0].isalpha():
             return ALPHA
         elif s[0].isdigit():
@@ -25,10 +34,10 @@ def lex(text):
             return NO
         else:
             if not string:
-                raise ParserError("Unknown symbol")
+                raise ParserError("Unknown symbol %s on line %d" % (s, line_num))
 
     def symb_check(t,s):
-        COMBINATIONS = (':=', '**', )
+        COMBINATIONS = ('>=', '<=', '**', )
         return (string.strip(string.join(t, ''))+s) in COMBINATIONS
 
     all_tokens = []
@@ -38,6 +47,8 @@ def lex(text):
     inline_comment = False
 
     for s in text:
+        if s == '\n':
+            line_num += 1
         if inline_comment:
             if s == '\n':
                 inline_comment = False
@@ -53,7 +64,7 @@ def lex(text):
             if current_type != QUOTE:
                 string_token += s
             else:
-                all_tokens.append("\"%s\"" % string_token)
+                all_tokens.append(Token("\"%s\"" % string_token, line_num))
                 string_token = ""
                 prev_type = QUOTE_end
                 token = []
@@ -64,7 +75,7 @@ def lex(text):
             if prev_type != NO:
                 clear_token = string.strip(string.join(token, ''))
                 if len(clear_token)>0:
-                    all_tokens.append(clear_token)
+                    all_tokens.append(Token(clear_token, line_num))
             prev_type = current_type
             token = [s]
 

@@ -55,14 +55,14 @@ def main():
         print("Done")
 
         print("Find variables and strings: ", end="")
-        vars, strs = find_vars(tree)
-        print("vars =", vars, file=tree_f)
-        print("strs =", strs, file=tree_f)
+        stat = find_vars(tree)
+        print("vars =", stat.vars, file=tree_f)
+        print("strs =", stat.strs, file=tree_f)
         print("Done")
 
         print("Generate NASM code: ", end="")
         asmfile = open(asmfile_name, 'w')
-        gen_code(tree, os.path.basename(fl), vars, strs, f=asmfile)
+        gen_code(tree, os.path.basename(fl), stat, f=asmfile)
         print("Done")
 
     except IOError:

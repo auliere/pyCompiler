@@ -15,6 +15,10 @@ def typeof(t):
                   "/": T_DIV,
                   ";": T_OPEREND,
                   ":": T_CTRLEND,
+                  ">": T_GT,
+                  "<": T_LT,
+                  ">=": T_GE,
+                  "<=": T_LE,
                   '(': T_POPEN,
                   ')': T_PCLOSE,
                   '{': T_BEGIN,
@@ -23,6 +27,9 @@ def typeof(t):
     word_dict = {
                   'if': T_IF,
                   'print': T_PRINT,
+                  'read': T_READ,
+                  'else': T_ELSE,
+                  'endif': T_ENDIF,
                 }
     if t.isalpha():
         if t in word_dict:
@@ -41,8 +48,6 @@ global_stack = []
 gres = []
 global_lex = []
 
-labelNum = 0
-
 def m_expressions():
     global global_lex
     stack = []
@@ -51,11 +56,19 @@ def m_expressions():
     weights = {
                 T_POPEN: 0,
                 T_PCLOSE: 1,
-                T_PLUS: 10,
-                T_MINUS: 10,
-                T_MUL: 20,
-                T_DIV: 20,
+                T_PLUS: 20,
+                T_MINUS: 20,
+                T_MUL: 10,
+                T_DIV: 10,
+
+                T_GT: 5,
+                T_LT: 5,
+                T_GE: 5,
+                T_LE: 5,
+                T_EQ: 5,
+
                 T_OPEREND: -9000,
+                T_CTRLEND: -9000,
               }
 
     while True:
@@ -84,11 +97,10 @@ def m_expressions():
         if len(stack)==0 or (weights[token_type] > weights[typeof(stack[-1])]):
             stack.append(token)
         
-        if token_type == T_OPEREND:
+        if token_type in [T_OPEREND, T_CTRLEND]:
             stack.pop()
             assert len(stack) == 0
             machine.pop()
-#            print "Parsed expression: %s" % (res)
             global_stack.append(res)
             global_lex.append(token)
 
@@ -101,7 +113,20 @@ def m_default():
         if state_type == None:
             return True
         else:
-            return token_type == links[state_type][1]
+            return token_type in links[state_type][1]
+
+    def extract_block(stop):
+        global gres
+        group = []
+        while True:
+            if not len(gres)>0:
+                raise ParserError("Syntax error")
+            last = gres.pop()
+            if last != stop:
+                group.append(last)
+            else:
+                break
+        gres.append((A_BLOCK, group))
 
     stack = []
     gres.append(A_BLOCK)
@@ -110,55 +135,77 @@ def m_default():
         token = (yield)
         ctype = typeof(token)
         if ctype == T_NO and token != None:
-            raise ParserError("Unknown token '%s'" % token)
+            raise ParserError("Unknown token '%s' on line %d" % (token, token.line))
 
         #Process state
         if ctype == T_BEGIN:
             gres.append(A_BLOCK)
             continue
         
-        if ctype == T_END:
+        elif ctype == T_END:
             group = []
-            while True:
-                if not len(gres)>0:
-                    raise ParserError("Syntax error")
-                last = gres.pop()
-                if last != A_BLOCK:
-                    group.append(last)
-                else:
-                    break
+            extract_block(A_BLOCK)
             gres.append((A_BLOCK, group))
             continue
 
-        if ctype == T_OPEREND:
+        elif ctype == T_ELSE:
+            stack.append(T_ELSE)
+
+        elif ctype == T_ENDIF:
+            stack.append(T_ENDIF)
+
+        elif ctype == T_OPEREND:
             operation = stack.pop()
             if operation == T_EQ:
                 if ptype == EXPR1:
                     op = (A_ASSIGN, [gres.pop(), global_stack.pop()])
                     gres.append(op)
 
-            if operation == T_PRINT:
+            elif operation == T_PRINT:
                 op = (A_PRINT, gres.pop())
+                gres.append(op)
+
+            elif operation == T_READ:
+                op = (A_READ, gres.pop())
+                gres.append(op)
+
+            elif operation == T_ENDIF:
+                extract_block(A_ELSE)
+                elseblock = gres.pop()
+                thenblock = gres.pop()
+                op = (A_IF, [global_stack.pop(), thenblock, elseblock])
                 gres.append(op)
 
             ptype = START
             waitfor = links[ptype][0]
             continue
 
-        if ctype == T_VAR:
+        elif ctype == T_CTRLEND:
+            operation = stack.pop()
+            if operation == T_IF:
+                gres.append(A_IF)
+
+            if operation == T_ELSE:
+                extract_block(A_IF) #THEN-block
+                gres.append(A_ELSE)
+            ptype = START
+            waitfor = links[ptype][0]
+            continue
+
+        elif ctype == T_VAR:
             gres.append(token)
 
-        if ctype == T_STRING:
+        elif ctype == T_STRING:
             gres.append(token)
 
-        if ctype == T_PRINT:
-            stack.append(T_PRINT)
+        elif ctype in [T_PRINT, T_READ]:
+            stack.append(ctype)
 
         #print token, ctype, ptype
 
         #Next state
         possibles = []
-
+        
         if len(waitfor) == 1: #single transition
             possibles.append(waitfor[0])
         else:
@@ -177,7 +224,7 @@ def m_default():
             m = m_expressions()
             m.next()
             machine.append(m)
-            stack.append(waitfor[0])
+            stack.append(ctype)
             ptype = waitfor[0]
 
 def synt(lex):
