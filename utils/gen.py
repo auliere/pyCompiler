@@ -154,14 +154,14 @@ def gen_code(t, srcfile, stat, f=sys.stdout):
     print("; Generated %s" % strftime("%Y-%m-%d %H:%M:%S", gmtime()), file=f)
     print("", file=f)
     print("SECTION .data", file=f)
-    
+
     print("\n;Strings", file=f)
     for i,vs in enumerate(stat.strs):
         s = clear_string(vs)
         print('str%d: db %s,0' % (i,s), file=f)
         print('lstr%d: equ $-str%d' % (i,i), file=f)
     print('numbs: db \"%d\",0', file=f)
-    print('numbs_in_format: db \"%d\"', file=f)
+    print('numbs_in_format: db \"%i\"', file=f)
 
     print("\n;Variables", file=f)
     for i,vs in enumerate(stat.vars):
