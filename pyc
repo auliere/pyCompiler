@@ -11,13 +11,134 @@ import subprocess
 from utils.lexer import lex
 from utils.syntax import synt, print_tree
 from utils.gen import find_vars, gen_code
-from utils import ParserError
+from utils import ParserError, verbose_output
 
 VERSION = (0,1)
 
 def print_header():
     print("pyCompiler %d.%d" % VERSION)
     print('-------------------')
+
+def build_file_path(fl_name, ext, build_dir=True):
+    fl = dirname = os.path.basename(fl_name)
+
+    if build_dir:
+        dirname = os.path.join(os.path.dirname(fl_name), 'build')
+    else:
+        dirname = os.path.dirname(fl_name)
+
+    parts = fl.split('.')
+    parts[-1] = ext
+    return os.path.join(dirname, string.join(parts,'.'))
+
+@verbose_output
+def do_lex(args):
+    lex_file = build_file_path(args.file, 'lex')
+    print("Lexical analysis: ", end="")
+    
+    lex_l = lex(file(args.file).read())
+    
+    if args.lex:
+        lexf = open(lex_file, 'w')
+        print(lex_l, file=lexf)
+        lexf.close()
+    
+    print("Done")
+    
+    return lex_l
+
+@verbose_output
+def do_synt(args, lex_l):
+    tree_file = build_file_path(args.file, 'synt')
+
+    print("Syntax analysis: ", end="")
+    
+    tree = synt(lex_l)
+    
+    if args.synt:
+        tree_f = open(tree_file, 'w')
+        print(tree, file=tree_f)
+        print_tree(tree, f=tree_f)
+        tree_f.close()
+    
+    print("Done")
+
+    return tree
+
+@verbose_output
+def do_stats(args, tree):
+    stats_file = build_file_path(args.file, 'stat')
+
+    print("Find variables and strings: ", end="")
+    stat = find_vars(tree)
+
+    if args.synt:
+        stats_f = open(stats_file, 'w')
+        print("vars =", stat.vars, file=stats_f)
+        print("strs =", stat.strs, file=stats_f)
+        stats_f.close()
+    print("Done")
+
+    return stat
+
+@verbose_output
+def do_gen_asm(args, tree, stat):
+    fl = os.path.basename(args.file)
+    asmfile_name = build_file_path(args.file, 'asm')
+
+    print("Generate NASM code: ", end="")
+    
+    asmfile = open(asmfile_name, 'w')
+    gen_code(tree, os.path.basename(fl), stat, f=asmfile)
+    asmfile.close()
+
+    print("Done")
+
+@verbose_output
+def do_compile(args):
+    lstfile_name = build_file_path(args.file, 'lst')
+    asmfile_name = build_file_path(args.file, 'asm')
+    ofile_name = build_file_path(args.file, 'o')
+
+    print("Compiling: ", end="")
+
+    params = ["nasm","-f", "elf", "-o", ofile_name, '-O2' if not args.no_optimize else '', \
+              '-l' if args.lst else '', lstfile_name if args.lst else '', asmfile_name]
+    try:
+        if args.verbose: print('\n', ' '.join(params))
+        res = subprocess.check_output(params)
+    except subprocess.CalledProcessError:
+        print("NASM Error!", file=sys.stderr)
+        print(res)
+        sys.exit(-1)
+    except OSError:
+        print("NASM not found", file=sys.stderr)
+        sys.exit(-1)
+
+    if not args.asm: os.remove(asmfile_name)
+    print("Done")
+    
+@verbose_output
+def do_link(args):
+    ofile_name = build_file_path(args.file, 'o')
+    binfile_name = build_file_path(args.file, 'bin', build_dir=False)
+
+    print("Linking: ", end="")
+    params = ["ld", '-s',  "-lc", '-dynamic-linker', '/lib/ld-linux.so.2', '-o', binfile_name, ofile_name]
+
+    try:
+        print('\n', ' '.join(params))
+        res = subprocess.check_output(params)
+    except subprocess.CalledProcessError:
+        print("ld Error!", file=sys.stderr)
+        print(res)
+        sys.exit(-1)
+    except OSError:
+        print("ld not found", file=sys.stderr)
+        sys.exit(-1)
+
+    if not args.asm: os.remove(ofile_name)
+    print("Done")
 
 def main():
     print_header()
@@ -36,111 +157,37 @@ def main():
     if args.all_intermediate: args.lex = args.asm = args.synt = args.lst = True
     build_files = args.lex or args.asm or args.synt or args.lst
 
-    fl_name = args.file
-    fl = dirname = os.path.basename(fl_name)
-    # file_name_we = '.'.join(fl.split('.')[:-1])
+    build_dir_name = os.path.join(os.path.dirname(args.file), 'build')
 
-    dirname = os.path.join(os.path.dirname(fl_name), 'build')
-
-    parts = fl.split('.')
-    parts[-1] = 'lex'
-    lex_file = os.path.join(dirname, string.join(parts,'.'))
-
-    parts[-1] = 'synt'
-    tree_file = os.path.join(dirname, string.join(parts,'.'))
-
-    parts[-1] = 'asm'
-    asmfile_name = os.path.join(dirname, string.join(parts,'.'))
-
-    parts[-1] = 'o'
-    ofile_name = os.path.join(dirname, string.join(parts,'.'))
-
-    parts[-1] = 'bin'
-    binfile_name = os.path.join(os.path.dirname(fl_name), string.join(parts,'.'))
-
-    parts[-1] = 'lst'
-    lstfile_name = os.path.join(dirname, string.join(parts,'.'))
-
-    if not os.path.exists(dirname):
-        os.mkdir(dirname)
+    if not os.path.exists(build_dir_name):
+        os.mkdir(build_dir_name)
 
     try:
-        if args.verbose: print("Lexical analysis: ", end="")
-        lex_l = lex(file(fl_name).read())
-        if args.lex:
-            lexf = open(lex_file, 'w')
-            print(lex_l, file=lexf)
-            lexf.close()
-        if args.verbose: print("Done")
-        
-        if args.verbose: print("Syntax analysis: ", end="")
-        tree = synt(lex_l)
-        if args.synt:
-            tree_f = open(tree_file, 'w')
-            print(tree, file=tree_f)
-            print_tree(tree, f=tree_f)
-        if args.verbose: print("Done")
+        tree = do_synt(args, do_lex(args) )
 
-        if args.verbose: print("Find variables and strings: ", end="")
-        stat = find_vars(tree)
-
-        if args.synt:
-            print("vars =", stat.vars, file=tree_f)
-            print("strs =", stat.strs, file=tree_f)
-            tree_f.close()
-        if args.verbose: print("Done")
-
-        if args.verbose: print("Generate NASM code: ", end="")
-        asmfile = open(asmfile_name, 'w')
-        gen_code(tree, os.path.basename(fl), stat, f=asmfile)
-        asmfile.close()
-        if args.verbose: print("Done")
-
-        # stdout = sys.stdout if args.verbose else None
-        
-        if args.verbose: print("Compiling: ", end="")
-        params = ["nasm","-f", "elf", "-o", ofile_name, '-O2' if not args.no_optimize else '', \
-                  '-l' if args.lst else '', lstfile_name if args.lst else '', asmfile_name]
-        try:
-            if args.verbose: print('\n', ' '.join(params))
-            res = subprocess.check_output(params)
-        except subprocess.CalledProcessError:
-            print("NASM Error!", file=sys.stderr)
-            print(res)
-            sys.exit(-1)
-        if not args.asm: os.remove(asmfile_name)
-        if args.verbose: print("Done")
-
-        # sleep(1)
-
-        if args.verbose: print("Linking: ", end="")
-        params = ["ld", '-s',  "-lc", '-dynamic-linker', '/lib/ld-linux.so.2', '-o', binfile_name, ofile_name]
-
-        try:
-            if args.verbose: print('\n', ' '.join(params))
-            res = subprocess.check_output(params)
-        except subprocess.CalledProcessError:
-            print("ld Error!", file=sys.stderr)
-            print(res)
-            sys.exit(-1)
-        if not args.asm: os.remove(ofile_name)
-        if args.verbose: print("Done")
+        do_gen_asm(args, tree, do_stats(args, tree) )
+        do_compile(args)
+        do_link(args)
 
     except IOError:
         print()
         print()
         print("ERROR: File not found", file=sys.stderr)
         sys.exit(-1)
+
     except ParserError, e:
         print()
         print()
         print('ERROR: %s' % e.message, file=sys.stderr)
-        # if args.verbose: raise e
+
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
         sys.exit(-2)
 
     if not build_files:
         try:
-            os.rmdir(dirname)
+            os.rmdir(build_dir_name)
         except OSError:
             pass
 

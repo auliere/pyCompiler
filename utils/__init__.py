@@ -1,5 +1,7 @@
 class ParserError(Exception): pass
 
+import os, sys
+
 from const import *
 
 def typeof(t):
@@ -41,3 +43,18 @@ def typeof(t):
         return T_STRING
     else:
         return T_NO
+
+def verbose_output(func):
+    def _verbose_output(*pargs, **kwargs):
+        args = pargs[0]
+        if not args.verbose:
+            null_output = open(os.devnull, 'w')
+            old_stdout = sys.stdout
+            sys.stdout = null_output
+
+        ret = func(*pargs, **kwargs)
+
+        if not args.verbose:
+            sys.stdout = old_stdout
+        return ret
+    return _verbose_output

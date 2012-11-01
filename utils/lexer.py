@@ -48,6 +48,8 @@ def lex(text):
 
     for s in text:
         if s == '\n':
+            if prev_type == QUOTE:
+                raise ParserError("Unclosed quotes on line %d" % line_num)
             line_num += 1
         if inline_comment:
             if s == '\n':
