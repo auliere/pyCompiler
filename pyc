@@ -35,16 +35,20 @@ def print_header():
 def main():
     parser = argparse.ArgumentParser()
     # parser.add_argument('--simple', action='store_true')
-    parser.add_argument('file', metavar="FILE", type=str)
-    parser.add_argument('-l', '--lex', action="store_true")
-    parser.add_argument('-s', '--synt', action="store_true")
-    parser.add_argument('-v', '--verbose', action="store_true")
-    parser.add_argument('-c', '--asm', action="store_true")
-    parser.add_argument('-no', '--no-optimize', action="store_true")
+    parser.add_argument('file', metavar="FILE", type=str, help='source file name')
+    parser.add_argument('-l', '--lex', action="store_true", help="save lexical processing results to file")
+    parser.add_argument('-s', '--synt', action="store_true", help="save syntax tree to file")
+    parser.add_argument('-v', '--verbose', action="store_true", help="print information")
+    parser.add_argument('-c', '--asm', action="store_true", help="save asm file")
+    parser.add_argument('-t', '--lst', action="store_true", help="listing")
+    parser.add_argument('-no', '--no-optimize', action="store_true", help="no -O2 option for nasm")
+    parser.add_argument('-a', '--all-intermediate', action="store_true", help="Synonym for -slc")
 
     print_header()
 
     args = parser.parse_args()
+    if args.all_intermediate: args.lex = args.asm = args.synt = args.lst = True
+
     #print(args)
 
     fl = args.file
@@ -64,6 +68,9 @@ def main():
 
     parts[-1] = 'bin'
     binfile_name = string.join(parts,'.')
+
+    parts[-1] = 'lst'
+    lstfile_name = string.join(parts,'.')
 
     try:
         if args.verbose: print("Lexical analysis: ", end="")
@@ -100,7 +107,8 @@ def main():
         # stdout = sys.stdout if args.verbose else None
         
         if args.verbose: print("Compiling: ", end="")
-        params = ["nasm","-f", "elf", "-o", ofile_name, '-O2' if not args.no_optimize else '', '-l', '1.txt', asmfile_name]
+        params = ["nasm","-f", "elf", "-o", ofile_name, '-O2' if not args.no_optimize else '', \
+                  '-l' if args.lst else '', lstfile_name if args.lst else '', asmfile_name]
         try:
             if args.verbose: print('\n', ' '.join(params))
             res = subprocess.check_output(params)
@@ -108,6 +116,7 @@ def main():
             print("NASM Error!", file=sys.stderr)
             print(res)
             sys.exit(-1)
+        if not args.asm: os.remove(asmfile_name)
         if args.verbose: print("Done")
 
         # sleep(1)
@@ -122,6 +131,7 @@ def main():
             print("ld Error!", file=sys.stderr)
             print(res)
             sys.exit(-1)
+        if not args.asm: os.remove(ofile_name)
         if args.verbose: print("Done")
 
     except IOError:
