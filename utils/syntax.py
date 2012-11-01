@@ -210,8 +210,6 @@ def m_default():
         elif ctype in [T_PRINT, T_READ]:
             stack.append(ctype)
 
-        #print token, ctype, ptype
-
         #Next state
         possibles = []
         

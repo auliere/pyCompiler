@@ -1,7 +1,7 @@
 print "Enter number:\n";
 read j;
 print j;
-if j >= 10:
+if j+2 >= 10:
     print " >= 10\n";
 else:
     print " < 10\n";

@@ -35,3 +35,29 @@ links = {
          ELSE: ((CTRLEND,), (T_ELSE,)),
          ENDIF: ((OPEREND,), (T_ENDIF,)),
         }
+
+SYMB_DICT = {
+              "=": T_EQ,
+              "+": T_PLUS,
+              "-": T_MINUS,
+              "*": T_MUL,
+              "/": T_DIV,
+              ";": T_OPEREND,
+              ":": T_CTRLEND,
+              ">": T_GT,
+              "<": T_LT,
+              ">=": T_GE,
+              "<=": T_LE,
+              '(': T_POPEN,
+              ')': T_PCLOSE,
+              '{': T_BEGIN,
+              '}': T_END,
+            }
+
+RESERVED_WORDS = {
+              'if': T_IF,
+              'print': T_PRINT,
+              'read': T_READ,
+              'else': T_ELSE,
+              'endif': T_ENDIF,
+            }

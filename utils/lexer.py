@@ -3,14 +3,13 @@ import string
 from utils import ParserError
 
 class Token(str):
-    def __new__(cls, val, line, *args, **kwargs):
+    def __new__(cls, val, line):
         s = super(Token, cls).__new__(cls, val)
         s.line = line
         return s
 
 def lex(text):
     global line_num
-    assert len(text)>0
 
     NO, ALPHA, NUM, SYMB, CMDEND, QUOTE, QUOTE_end, COMMENT = range(8)
         

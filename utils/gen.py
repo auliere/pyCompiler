@@ -138,6 +138,8 @@ def gen_text_section(t, stat, f=sys.stdout):
                   "push dword eax"
                   , file=f)
 
+        elif node[0] in ['*','/']:
+            raise NotImplementedError("%s operation is not implemented yet" % node[0])
         else:
             raise ParserError("Error generating ASM code on node %s" % repr(node))
 
