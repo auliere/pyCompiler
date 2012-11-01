@@ -113,7 +113,7 @@ def m_default():
         group = []
         while True:
             if not len(gres)>0:
-                raise ParserError("Syntax error")
+                raise ParserError("Syntax error: invalid block")
             last = gres.pop()
             if last != stop:
                 group.append(last)

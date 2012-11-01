@@ -1,6 +1,8 @@
+print "Enter number:\n";
 read j;
+print j;
 if j >= 10:
-    print "Text Blabla 1\n";
+    print " >= 10\n";
 else:
-    print "Text 2\n";
+    print " < 10\n";
 endif;
