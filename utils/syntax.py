@@ -1,48 +1,31 @@
+from __future__ import print_function
+
+import sys
+
 from utils import ParserError
 from const import *
+from . import typeof
 
 MACHINE_DEFAULT, MACHINE_EXPR = range(2)
 machine = []
 
-def typeof(t):
-    if t == None:
-        return T_NO
-    symb_dict = {
-                  "=": T_EQ,
-                  "+": T_PLUS,
-                  "-": T_MINUS,
-                  "*": T_MUL,
-                  "/": T_DIV,
-                  ";": T_OPEREND,
-                  ":": T_CTRLEND,
-                  ">": T_GT,
-                  "<": T_LT,
-                  ">=": T_GE,
-                  "<=": T_LE,
-                  '(': T_POPEN,
-                  ')': T_PCLOSE,
-                  '{': T_BEGIN,
-                  '}': T_END,
-                }
-    word_dict = {
-                  'if': T_IF,
-                  'print': T_PRINT,
-                  'read': T_READ,
-                  'else': T_ELSE,
-                  'endif': T_ENDIF,
-                }
-    if t.isalpha():
-        if t in word_dict:
-            return word_dict[t]
-        else: return T_VAR
-    elif t.isdigit():
-        return T_NUMBER
-    elif t in symb_dict:
-        return symb_dict[t]
-    elif t[0] == '"' and t[-1] == '"':
-        return T_STRING
-    else:
-        return T_NO
+def synt(lex):
+    global global_lex, global_stack, gres
+    global_lex = []
+    global_stack = []
+    gres = []
+    def_machine = m_default()
+    def_machine.next()
+    #INIT
+    machine.append(def_machine)
+
+    global_lex = list(reversed(lex))
+    while len(global_lex) > 0:
+        token = global_lex.pop()
+        machine[-1].send(token)
+
+    def_machine.send('}')
+    return gres
 
 global_stack = []
 gres = []
@@ -71,11 +54,21 @@ def m_expressions():
                 T_CTRLEND: -9000,
               }
 
+    current_line = -1
+
     while True:
         token = (yield)
+        if hasattr(token, 'line'):
+            current_line = token.line
+
         if token == None:
             continue
+
         token_type = typeof(token)
+
+        if token_type not in [T_OPEREND, T_CTRLEND] + EXPRESSIONS_TOKENS:
+            raise ParserError('Syntax error on line %d' % current_line)
+
         if token_type in [T_VAR, T_NUMBER]:
             res.append(token)
             continue
@@ -97,7 +90,7 @@ def m_expressions():
         if len(stack)==0 or (weights[token_type] > weights[typeof(stack[-1])]):
             stack.append(token)
         
-        if token_type in [T_OPEREND, T_CTRLEND]:
+        if token_type not in EXPRESSIONS_TOKENS:
             stack.pop()
             assert len(stack) == 0
             machine.pop()
@@ -130,12 +123,28 @@ def m_default():
 
     stack = []
     gres.append(A_BLOCK)
+    current_line = -1
 
     while True:
         token = (yield)
+        if hasattr(token, 'line'):
+            current_line = token.line
+
+        if ptype in [EXPR1, EXPR2]: # processed in other machine, so waiting for ';' or ':'
+            waitfor = links[ptype][0]
+
         ctype = typeof(token)
+        # check syntax errors
+        possibles = reduce(lambda a,b: a+b, map(lambda x:[] if links[x][1] == None else list(links[x][1]), waitfor))
+        if possibles is None:
+            possibles = []
+        else:
+            possibles = list(possibles)
+        possibles += RANGES_LIST
+        if possibles is not None and ctype not in possibles:
+            raise ParserError('Syntax error on line %d' % current_line)
         if ctype == T_NO and token != None:
-            raise ParserError("Unknown token '%s' on line %d" % (token, token.line))
+            raise ParserError("Unknown token '%s' on line %d" % (token, current_line))
 
         #Process state
         if ctype == T_BEGIN:
@@ -227,18 +236,15 @@ def m_default():
             stack.append(ctype)
             ptype = waitfor[0]
 
-def synt(lex):
-    global global_lex
-    def_machine = m_default()
-    def_machine.next()
-    #INIT
-    machine.append(def_machine)
-
-    global_lex = list(reversed(lex))
-    while len(global_lex) > 0:
-        token = global_lex.pop()
-        machine[-1].send(token)
-
-    def_machine.send('}')
-    # def_machine.send(None)
-    return gres
+def print_tree(t, n=0, f=sys.stdout):
+    if isinstance(t,list):
+        for x in reversed(t):
+            print_tree(x, n, f=f)
+    elif isinstance(t,tuple):
+        if t[0] in NAMES:
+            print("--"*n, NAMES[t[0]], file=f)
+        else:
+            print("--"*n, t[0], file=f)
+        print_tree(t[1], n=n+1, f=f)
+    else:
+        print("--"*n,t, file=f)

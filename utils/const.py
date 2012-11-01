@@ -5,6 +5,9 @@ T_NO, T_IF, T_PRINT, T_READ, T_VAR, T_NUMBER, T_STRING, T_OPEREND, T_CTRLEND, T_
     T_LT, T_GT, T_GE, T_LE, T_ELSE, T_ENDIF = range(24)
 A_NO, A_ASSIGN, A_IF, A_BLOCK, A_PRINT, A_ELSE, A_READ = range(7)
 
+EXPRESSIONS_TOKENS = [T_VAR, T_NUMBER, T_STRING, T_EQ, \
+                      T_PLUS, T_MINUS, T_MUL, T_DIV, T_LT, T_GT, T_GE, T_LE]
+
 NAMES = {
          A_NO: "<no>",
          A_ASSIGN: "=",
@@ -14,7 +17,9 @@ NAMES = {
          A_READ: "read",
         }
 
-START_LIST = (VAR1, PRINT, IF, ELSE, ENDIF, )
+START_LIST = (VAR1, PRINT, IF, ELSE, ENDIF)
+RANGES_LIST = (T_BEGIN, T_END)
+LINE_END = (CTRLEND, OPEREND)
 links = {
          START: (START_LIST, None),
          VAR1: ((ASSIGN, ), (T_VAR,)),

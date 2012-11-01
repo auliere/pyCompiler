@@ -4,8 +4,7 @@ import sys
 from time import gmtime, strftime
 
 from utils.const import *
-from utils.syntax import typeof
-from utils import ParserError
+from utils import ParserError, typeof
 
 class TreeStats(object):
     def __init__(self, vars=[], strs=[]):

@@ -9,32 +9,20 @@ import argparse
 import subprocess
 
 from utils.lexer import lex
-from utils.syntax import synt
+from utils.syntax import synt, print_tree
 from utils.gen import find_vars, gen_code
-from utils.const import NAMES
+from utils import ParserError
 
 VERSION = (0,1)
-
-def print_tree(t, n=0, f=sys.stdout):
-    if isinstance(t,list):
-        for x in reversed(t):
-            print_tree(x, n, f=f)
-    elif isinstance(t,tuple):
-        if t[0] in NAMES:
-            print("--"*n, NAMES[t[0]], file=f)
-        else:
-            print("--"*n, t[0], file=f)
-        print_tree(t[1], n=n+1, f=f)
-    else:
-        print("--"*n,t, file=f)
 
 def print_header():
     print("pyCompiler %d.%d" % VERSION)
     print('-------------------')
 
 def main():
+    print_header()
+
     parser = argparse.ArgumentParser()
-    # parser.add_argument('--simple', action='store_true')
     parser.add_argument('file', metavar="FILE", type=str, help='source file name')
     parser.add_argument('-l', '--lex', action="store_true", help="save lexical processing results to file")
     parser.add_argument('-s', '--synt', action="store_true", help="save syntax tree to file")
@@ -44,37 +32,41 @@ def main():
     parser.add_argument('-no', '--no-optimize', action="store_true", help="no -O2 option for nasm")
     parser.add_argument('-a', '--all-intermediate', action="store_true", help="Synonym for -slc")
 
-    print_header()
-
     args = parser.parse_args()
     if args.all_intermediate: args.lex = args.asm = args.synt = args.lst = True
+    build_files = args.lex or args.asm or args.synt or args.lst
 
-    #print(args)
+    fl_name = args.file
+    fl = dirname = os.path.basename(fl_name)
+    # file_name_we = '.'.join(fl.split('.')[:-1])
 
-    fl = args.file
+    dirname = os.path.join(os.path.dirname(fl_name), 'build')
 
     parts = fl.split('.')
     parts[-1] = 'lex'
-    lex_file = string.join(parts,'.')
+    lex_file = os.path.join(dirname, string.join(parts,'.'))
 
     parts[-1] = 'synt'
-    tree_file = string.join(parts,'.')
+    tree_file = os.path.join(dirname, string.join(parts,'.'))
 
     parts[-1] = 'asm'
-    asmfile_name = string.join(parts,'.')
+    asmfile_name = os.path.join(dirname, string.join(parts,'.'))
 
     parts[-1] = 'o'
-    ofile_name = string.join(parts,'.')
+    ofile_name = os.path.join(dirname, string.join(parts,'.'))
 
     parts[-1] = 'bin'
-    binfile_name = string.join(parts,'.')
+    binfile_name = os.path.join(os.path.dirname(fl_name), string.join(parts,'.'))
 
     parts[-1] = 'lst'
-    lstfile_name = string.join(parts,'.')
+    lstfile_name = os.path.join(dirname, string.join(parts,'.'))
+
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
 
     try:
         if args.verbose: print("Lexical analysis: ", end="")
-        lex_l = lex(file(fl).read())
+        lex_l = lex(file(fl_name).read())
         if args.lex:
             lexf = open(lex_file, 'w')
             print(lex_l, file=lexf)
@@ -135,8 +127,22 @@ def main():
         if args.verbose: print("Done")
 
     except IOError:
+        print()
+        print()
         print("ERROR: File not found", file=sys.stderr)
         sys.exit(-1)
+    except ParserError, e:
+        print()
+        print()
+        print('ERROR: %s' % e.message, file=sys.stderr)
+        # if args.verbose: raise e
+        sys.exit(-2)
+
+    if not build_files:
+        try:
+            os.rmdir(dirname)
+        except OSError:
+            pass
 
 if __name__ == '__main__':
     main()
