@@ -41,7 +41,7 @@ def lex(text):
 
     all_tokens = []
     token = []
-    prev_type = current_type = typeof(text[0])
+    prev_type = current_type = NO
     string_token = ""
     inline_comment = False
 
@@ -57,10 +57,6 @@ def lex(text):
 
         current_type = typeof(s, prev_type == QUOTE)
 
-        if current_type == COMMENT:
-            inline_comment = True
-            continue
-
         if prev_type == QUOTE:
             if current_type != QUOTE:
                 string_token += s
@@ -69,6 +65,10 @@ def lex(text):
                 string_token = ""
                 prev_type = QUOTE_end
                 token = []
+            continue
+
+        if current_type == COMMENT:
+            inline_comment = True
             continue
         if (prev_type == current_type) and (current_type != SYMB or symb_check(token, s)):
             token.append(s)
