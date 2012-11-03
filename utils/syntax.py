@@ -154,7 +154,8 @@ def m_default():
         elif ctype == T_END:
             group = []
             extract_block(A_BLOCK)
-            gres.append((A_BLOCK, group))
+            if len(group)>0:
+                gres.append((A_BLOCK, group))
             continue
 
         elif ctype == T_ELSE:
