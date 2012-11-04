@@ -1,10 +1,21 @@
 from utils.lexer import lex
 from utils.syntax import synt
 from utils.gen import find_vars, gen_code
-from nose.tools import assert_equal#, raises, nottest
+from nose.tools import assert_equal, nottest#, raises, 
 
 import os
 import subprocess
+import functools
+
+def compile_src(f_name):
+    def _compile(func):
+        @functools.wraps(func)
+        def __compile(self):
+            self.bin = self.compile(f_name)
+            func(self)
+            os.remove(self.bin)
+        return __compile
+    return _compile
 
 class TestGenerator(object):
     @classmethod
@@ -34,27 +45,24 @@ class TestGenerator(object):
         os.remove(o)
         return bin
 
+    def run(self, in_data=None):
+        proc = subprocess.Popen(self.bin, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        return proc.communicate(in_data)[0]
+
+    @compile_src("t1.src")
     def test_smoke(self):
-        bin = self.compile('t1.src')
-        proc = subprocess.Popen(bin, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        stdout, stderr = proc.communicate()
-        assert_equal(stdout.strip(), '63')
-        os.remove(bin)
+        assert_equal(self.run().strip(), '63')
 
+    @compile_src("t2.src")
     def test_read(self):
-        bin = self.compile('t2.src')
-        proc = subprocess.Popen(bin, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        stdout, stderr = proc.communicate("12")
-        assert_equal(stdout.strip(), '22')
-        os.remove(bin)
+        assert_equal(self.run("12").strip(), '22')
 
+    @compile_src("t3.src")
     def test_if(self):
-        bin = self.compile('t3.src')
-        proc = subprocess.Popen(bin, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        stdout, stderr = proc.communicate("50")
-        assert_equal(stdout.strip(), 'DEF')
+        assert_equal(self.run("50").strip(), 'DEF')
+        assert_equal(self.run("500").strip(), 'ABC')
 
-        proc = subprocess.Popen(bin, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        stdout, stderr = proc.communicate("500")
-        assert_equal(stdout.strip(), 'ABC')
-        os.remove(bin)
+    @nottest
+    @compile_src("t4.src")
+    def test_mul(self):
+        assert_equal(self.run("12").strip(), '30')
