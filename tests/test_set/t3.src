@@ -1,0 +1,6 @@
+read i;
+if i>100:
+	print "ABC";
+else:
+	print "DEF";
+endif;

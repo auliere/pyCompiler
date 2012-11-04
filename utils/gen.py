@@ -7,7 +7,12 @@ from utils.const import *
 from utils import ParserError, typeof
 
 class TreeStats(object):
-    def __init__(self, vars=[], strs=[]):
+    def __init__(self, vars=None, strs=None):
+        if vars is None:
+            vars = []
+        if strs is None:
+            strs = []
+
         self.vars = vars
         self.strs = strs
         self.use_print = False
@@ -62,14 +67,20 @@ def gen_text_section(t, stat, f=sys.stdout):
                 strnum = stat.strs.index(node[1])
                 print("push dword str%d\n" % strnum +
                       "call printf\n"
-                      "add esp, 4"
+                      "add esp, 4\n"
+                      "push dword [stdout]\n"
+                      "call fflush\n"
+                      "add esp, 4\n"
                     , file=f)
             elif typeof(node[1]) == T_VAR:
                 print("mov eax, [v%s]\n" % node[1] +
                       "push dword eax\n"
                       "push dword numbs\n"
                       "call printf\n"
-                      "add esp, 8"
+                      "add esp, 8\n"
+                      "push dword [stdout]\n"
+                      "call fflush\n"
+                      "add esp, 4\n"
                       , file=f)
             else:
                 raise ParserError("Error print argument: %s" % node)
@@ -79,7 +90,8 @@ def gen_text_section(t, stat, f=sys.stdout):
             print("push v%s\n" % node[1] +
                   "push dword numbs_in_format\n"
                   "call scanf\n"
-                  "add esp, 8"
+                  "add esp, 8\n"
+                  "call getchar\n"
                   , file=f)
 
         elif node[0] == A_ASSIGN:
@@ -161,7 +173,7 @@ def gen_code(t, srcfile, stat, f=sys.stdout):
         s = clear_string(vs)
         print('str%d: db %s,0' % (i,s), file=f)
         print('lstr%d: equ $-str%d' % (i,i), file=f)
-    print('numbs: db \"%d\",0', file=f)
+    print('numbs: db \"%i\",0', file=f)
     print('numbs_in_format: db \"%i\"', file=f)
 
     print("\n;Variables", file=f)
@@ -171,10 +183,18 @@ def gen_code(t, srcfile, stat, f=sys.stdout):
     print("", file=f)
     print("SECTION .text", file=f)
     print("global _start", file=f)
+    extern = []
     if stat.use_print:
-        print("extern printf", file=f)
+        extern.append("printf")
     if stat.use_read:
-        print("extern scanf", file=f)
+        extern.append("scanf")
+        extern.append("getchar")
+    if stat.use_read or stat.use_print:
+        extern.append("fflush")
+        extern.append("stdout")
+
+    for e in extern:
+      print("extern %s" % e, file=f)
 
     print("_start: ", file=f)
     print("push ebp ; setup stack frame", file=f)
