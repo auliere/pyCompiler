@@ -1,9 +1,7 @@
 from utils.lexer import lex
 from utils.syntax import synt
 from utils.gen import find_vars, gen_code
-from utils import ParserError
-
-from nose.tools import assert_equal, raises, nottest
+from nose.tools import assert_equal#, raises, nottest
 
 import os
 import subprocess
