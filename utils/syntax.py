@@ -130,7 +130,7 @@ def m_default():
         if hasattr(token, 'line'):
             current_line = token.line
 
-        if ptype in [EXPR1, EXPR2]: # processed in other machine, so waiting for ';' or ':'
+        if ptype in EXPRESSIONS_STATES: # processed in other machine, so waiting for ';' or ':'
             waitfor = links[ptype][0]
 
         ctype = typeof(token)
@@ -164,6 +164,9 @@ def m_default():
         elif ctype == T_ENDIF:
             stack.append(T_ENDIF)
 
+        elif ctype == T_ENDWHILE:
+            stack.append(T_ENDWHILE)
+
         elif ctype == T_OPEREND:
             operation = stack.pop()
             if operation == T_EQ:
@@ -186,6 +189,12 @@ def m_default():
                 op = (A_IF, [global_stack.pop(), thenblock, elseblock])
                 gres.append(op)
 
+            elif operation == T_ENDWHILE:
+                extract_block(A_WHILE)
+                block = gres.pop()
+                op = (A_WHILE, [global_stack.pop(), block])
+                gres.append(op)
+
             ptype = START
             waitfor = links[ptype][0]
             continue
@@ -194,6 +203,9 @@ def m_default():
             operation = stack.pop()
             if operation == T_IF:
                 gres.append(A_IF)
+
+            if operation == T_WHILE:
+                gres.append(A_WHILE)
 
             if operation == T_ELSE:
                 extract_block(A_IF) #THEN-block
@@ -228,7 +240,7 @@ def m_default():
         ptype = possibles[0]
         waitfor = links[ptype][0]
 
-        if len(waitfor) == 1 and waitfor[0] in [EXPR1, EXPR2]:
+        if len(waitfor) == 1 and waitfor[0] in EXPRESSIONS_STATES:
             m = m_expressions()
             m.next()
             machine.append(m)

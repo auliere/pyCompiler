@@ -1,9 +1,9 @@
 NO, START, VAR1, VAR2, PRINT, IF, ASSIGN, STRING, EXPR1, EXPR2, \
-    OPEREND, CTRLEND, ELSE, ENDIF = range(14)
+    OPEREND, CTRLEND, ELSE, ENDIF, WHILE, ENDWHILE, EXPR3 = range(17)
 T_NO, T_IF, T_PRINT, T_READ, T_VAR, T_NUMBER, T_STRING, T_OPEREND, T_CTRLEND, T_EQ, \
     T_PLUS, T_MINUS, T_MUL, T_DIV, T_POPEN, T_PCLOSE, T_BEGIN, T_END, \
-    T_LT, T_GT, T_GE, T_LE, T_ELSE, T_ENDIF = range(24)
-A_NO, A_ASSIGN, A_IF, A_BLOCK, A_PRINT, A_ELSE, A_READ = range(7)
+    T_LT, T_GT, T_GE, T_LE, T_ELSE, T_ENDIF, T_WHILE, T_ENDWHILE = range(26)
+A_NO, A_ASSIGN, A_IF, A_BLOCK, A_PRINT, A_ELSE, A_READ, A_WHILE = range(8)
 
 EXPRESSIONS_TOKENS = [T_VAR, T_NUMBER, T_STRING, T_EQ, \
                       T_PLUS, T_MINUS, T_MUL, T_DIV, T_LT, \
@@ -16,11 +16,13 @@ NAMES = {
          A_BLOCK: "{block}",
          A_PRINT: "print",
          A_READ: "read",
+         A_WHILE: "while",
         }
 
-START_LIST = (VAR1, PRINT, IF, ELSE, ENDIF)
+START_LIST = (VAR1, PRINT, IF, ELSE, ENDIF, WHILE, ENDWHILE)
 RANGES_LIST = (T_BEGIN, T_END)
 LINE_END = (CTRLEND, OPEREND)
+EXPRESSIONS_STATES = (EXPR1, EXPR2, EXPR3)
 links = {
          START: (START_LIST, None),
          VAR1: ((ASSIGN, ), (T_VAR,)),
@@ -35,6 +37,9 @@ links = {
          CTRLEND: (START_LIST, (T_CTRLEND,)),
          ELSE: ((CTRLEND,), (T_ELSE,)),
          ENDIF: ((OPEREND,), (T_ENDIF,)),
+         WHILE: ((EXPR3, ), (T_WHILE,)),
+         EXPR3: ((CTRLEND, ), None),
+         ENDWHILE: ((OPEREND,), (T_ENDWHILE,)),
         }
 
 SYMB_DICT = {
@@ -61,4 +66,6 @@ RESERVED_WORDS = {
               'read': T_READ,
               'else': T_ELSE,
               'endif': T_ENDIF,
+              'while': T_WHILE,
+              'endwhile': T_ENDWHILE,
             }

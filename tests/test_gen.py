@@ -1,7 +1,7 @@
 from utils.lexer import lex
 from utils.syntax import synt
 from utils.gen import find_vars, gen_code
-from nose.tools import assert_equal, nottest#, raises, 
+from nose.tools import assert_equal, nottest
 
 import os
 import subprocess
@@ -65,4 +65,10 @@ class TestGenerator(object):
     @nottest
     @compile_src("t4.src")
     def test_mul(self):
-        assert_equal(self.run("12").strip(), '30')
+        " mul, div and mod "
+        assert_equal(self.run("12").strip(), '30\n2')
+
+    @compile_src("t5.src")
+    def test_while(self):
+        " while loop "
+        assert_equal(self.run("5").strip(), '50')

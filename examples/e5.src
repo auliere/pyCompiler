@@ -1,0 +1,11 @@
+i = 5;
+print i;
+print "\n";
+
+#j = 0-5;
+j=3;
+print i;
+print "\n";
+
+print j;
+print "\n";

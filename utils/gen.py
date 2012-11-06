@@ -41,9 +41,10 @@ def find_vars(t, stat=None):
 
 ifNum = 0
 labelNum = 0
+loopNum = 0
 
 def gen_text_section(t, stat, f=sys.stdout):
-    global labelNum, ifNum
+    global labelNum, ifNum, loopNum
     iterate = t
     if isinstance(t, list):
         iterate = reversed(t)
@@ -97,28 +98,28 @@ def gen_text_section(t, stat, f=sys.stdout):
         elif node[0] == A_ASSIGN:
             var = node[1][0]
             gen_text_section(node[1][1], stat, f=f)
-            print("pop eax", file=f)
+            print("pop dword eax", file=f)
             print("mov [v%s], eax" % var, file=f)
 
         elif node[0] == A_IF:
             ifNum += 1
             gen_text_section(node[1][0], stat, f=f)
-            print("pop eax\n"
+            print("pop dword eax\n"
                   "cmp eax,0\n"
-                  "jnz llif%delse\n" % ifNum
+                  "jnz llIf%dElse\n" % ifNum
                 , file=f)
             gen_text_section(node[1][1], stat, f=f)
-            print("jmp llif%dend\n" % ifNum +
-                  "llif%delse: nop\n" % ifNum
+            print("jmp llIf%dEnd\n" % ifNum +
+                  "llIf%dElse: nop\n" % ifNum
                 , file=f)
             gen_text_section(node[1][2], stat, f=f)
-            print("llif%dend: nop" % ifNum
+            print("llIf%dEnd: nop" % ifNum
                 , file=f)
 
         elif node[0] == '+':
             gen_text_section(node[1], stat, f=f)
-            print("pop eax\n"
-                  "pop ebx\n"
+            print("pop dword eax\n"
+                  "pop dword ebx\n"
                   "add eax,ebx\n"
                   "push dword eax"
                   , file=f)
@@ -132,8 +133,8 @@ def gen_text_section(t, stat, f=sys.stdout):
                   '<': 'jl',
                   '=': 'je',
                  }
-            print("pop eax\n"
-                  "pop ebx\n"
+            print("pop dword eax\n"
+                  "pop dword ebx\n"
                   "cmp eax,ebx\n"
                   "%s ll%d\n" % (op[node[0]], labelNum) +
                   "push dword 1\n"
@@ -144,11 +145,24 @@ def gen_text_section(t, stat, f=sys.stdout):
 
         elif node[0] == '-':
             gen_text_section(node[1], stat, f=f)
-            print("pop eax\n"
-                  "pop ebx\n"
+            print("pop dword eax\n"
+                  "pop dword ebx\n"
                   "sub eax,ebx\n"
                   "push dword eax"
                   , file=f)
+
+        elif node[0] == A_WHILE:
+            print("llWhile%d: nop\n" % loopNum, file=f)
+            gen_text_section(node[1][0], stat, f=f)
+            print("pop dword eax\n"
+                  "cmp eax,0\n"
+                  "jnz llWhile%dEnd\n" % loopNum
+                , file=f)
+            gen_text_section(node[1][1], stat, f=f)
+            print("jmp llWhile%d\n" % loopNum +
+                  "llWhile%dEnd: nop\n" % loopNum
+                , file=f)
+            loopNum += 1
 
         elif node[0] in ['*','/']:
             raise NotImplementedError("%s operation is not implemented yet" % node[0])
@@ -173,12 +187,12 @@ def gen_code(t, srcfile, stat, f=sys.stdout):
         s = clear_string(vs)
         print('str%d: db %s,0' % (i,s), file=f)
         print('lstr%d: equ $-str%d' % (i,i), file=f)
-    print('numbs: db \"%i\",0', file=f)
-    print('numbs_in_format: db \"%i\"', file=f)
+    print('numbs: db \"%d\",0', file=f)
+    print('numbs_in_format: db \"%d\"', file=f)
 
     print("\n;Variables", file=f)
     for i,vs in enumerate(stat.vars):
-        print('v%s: db 0' % vs, file=f)
+        print('v%s: dd 0' % vs, file=f)
 
     print("", file=f)
     print("SECTION .text", file=f)
