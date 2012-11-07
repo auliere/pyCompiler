@@ -21,7 +21,7 @@ def lex(text):
             return ALPHA
         elif s[0].isdigit():
             return NUM
-        elif s[0] in "=:><+-*/(){}":
+        elif s[0] in "=:><+-*/(){}%":
             return SYMB
         elif s[0] in [';']:
             return CMDEND

@@ -41,8 +41,9 @@ def m_expressions():
                 T_PCLOSE: 1,
                 T_PLUS: 20,
                 T_MINUS: 20,
-                T_MUL: 10,
-                T_DIV: 10,
+                T_IMUL: 10,
+                T_IDIV: 10,
+                T_MOD: 10,
 
                 T_GT: 5,
                 T_LT: 5,

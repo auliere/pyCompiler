@@ -2,7 +2,7 @@ from utils.lexer import lex
 from utils.syntax import synt
 from utils.gen import find_vars, gen_code
 from utils.gen_asm import gen_real_asm
-from nose.tools import assert_equal, nottest
+from nose.tools import assert_equal
 
 import os
 import subprocess
@@ -71,7 +71,6 @@ class TestGenerator(object):
         assert_equal(self.run("50").strip(), 'DEF')
         assert_equal(self.run("500").strip(), 'ABC')
 
-    @nottest
     @compile_src("t4.src")
     def test_mul(self):
         " mul, div and mod "

@@ -44,6 +44,10 @@ def nasm_gen(l):
     elif l[0] == C_ADD:
         cmd = ["add %s, %s" % (operand(l[2][0], l[1][0]),
                               operand(l[2][1], l[1][1]))]
+    elif l[0] == C_IMUL: #
+        cmd = ["imul %s" % l[2]]
+    elif l[0] == C_IDIV: #
+        cmd = ["idiv %s" % l[2]]
     elif l[0] == C_SUB:
         cmd = ["sub %s, %s" % (operand(l[2][0], l[1][0]),
                               operand(l[2][1], l[1][1]))]

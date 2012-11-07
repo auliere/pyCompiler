@@ -67,6 +67,8 @@ def gen_text_section(t, stat, p=None):
     aa_call = partial(make_asm_node, cmd=C_CALL, o=None)
     aa_add = partial(make_asm_node, cmd=C_ADD)
     aa_sub = partial(make_asm_node, cmd=C_SUB)
+    aa_imul = partial(make_asm_node, cmd=C_IMUL, o=None)
+    aa_idiv = partial(make_asm_node, cmd=C_IDIV, o=None)
     aa_cmp = partial(make_asm_node, cmd=C_CMP, o=None)
     aa_jmp = partial(make_asm_node, cmd=C_JMP)
     aa_label = partial(make_asm_node, cmd=C_LABEL, o=None)
@@ -177,6 +179,27 @@ def gen_text_section(t, stat, p=None):
             aa_sub(o=[C_OPT_NO, C_OPT_NO], v=["eax", "ebx"])
             aa_push_num(v="eax")
 
+        elif node[0] == '*':
+            gen_text_section(node[1], stat, p=p)
+            aa_pop(v="eax")
+            aa_pop(v="ebx")
+            aa_imul(v="ebx")
+            aa_push_num(v="eax")
+
+        elif node[0] == '/':
+            gen_text_section(node[1], stat, p=p)
+            aa_pop(v="eax")
+            aa_pop(v="ebx")
+            aa_idiv(v="ebx")
+            aa_push_num(v="eax")
+
+        elif node[0] == '%':
+            gen_text_section(node[1], stat, p=p)
+            aa_pop(v="eax")
+            aa_pop(v="ebx")
+            aa_idiv(v="ebx")
+            aa_push_num(v="edx")
+
         elif node[0] == A_WHILE:
             p.loopNum += 1
 
@@ -192,7 +215,7 @@ def gen_text_section(t, stat, p=None):
             aa_jmp(o=None, v="llWhile%d" % p.loopNum)
             aa_label(v="llWhile%dEnd" % p.loopNum)
 
-        elif node[0] in ['*','/']:
+        elif node[0] in ['/', '%']:
             raise NotImplementedError("%s operation is not implemented yet" % node[0])
         else:
             raise ParserError("Error generating ASM code on node %s" % repr(node))
