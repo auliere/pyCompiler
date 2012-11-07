@@ -68,6 +68,8 @@ def optimize_mov_push(text):
     result = []
     for i,op in enumerate(text):
         if op[0] == C_MOV:
+            if prev_mov is not None:
+                result.append(prev_mov)
             prev_mov = op
         elif op[0] == C_PUSH:
             if prev_mov is not None:
