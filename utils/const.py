@@ -1,20 +1,24 @@
 # State machine
 NO, START, VAR1, VAR2, PRINT, IF, ASSIGN, STRING, EXPR1, EXPR2, \
-    OPEREND, CTRLEND, ELSE, ENDIF, WHILE, ENDWHILE, EXPR3 = range(17)
+    OPEREND, CTRLEND, ELSE, ENDIF, WHILE, ENDWHILE, EXPR3, FUNCTION, \
+    FUNCNAME, FUNCARGSSTART, FUNCARGSEND, FUNCARG, FUNCARGSEP, RETURN, \
+    VAR3, ENDFUNC = range(26)
 
 # Token types
 T_NO, T_IF, T_PRINT, T_READ, T_VAR, T_NUMBER, T_STRING, T_OPEREND, T_CTRLEND, T_EQ, \
     T_PLUS, T_MINUS, T_IMUL, T_IDIV, T_POPEN, T_PCLOSE, T_BEGIN, T_END, \
-    T_LT, T_GT, T_GE, T_LE, T_ELSE, T_ENDIF, T_WHILE, T_ENDWHILE, T_MOD = range(27)
+    T_LT, T_GT, T_GE, T_LE, T_ELSE, T_ENDIF, T_WHILE, T_ENDWHILE, T_MOD,\
+    T_FUNCTION, T_SEPARATOR, T_RETURN, T_ENDFUNC = range(31)
 
 # Tree blocks
-A_NO, A_ASSIGN, A_IF, A_BLOCK, A_PRINT, A_ELSE, A_READ, A_WHILE = range(8)
+A_NO, A_ASSIGN, A_IF, A_BLOCK, A_PRINT, A_ELSE, A_READ, A_WHILE, A_FUNCTION, \
+   A_RETURN = range(10)
 
 # Asm command type
 # C_EQU_F is $-label
 C_NO, C_ADD, C_SUB, C_PUSH, C_POP, C_CALL, C_PRINT, C_COMMENT, C_READ, C_MOV, \
 C_CMP, C_DB, C_DD, C_EQU, C_EQU_F, C_EXTRN, C_GLOBL, C_LABEL, C_INT, C_JMP, \
-C_IMUL, C_IDIV = range(22)
+C_IMUL, C_IDIV, C_RET = range(23)
 
 C_OPT_NO, C_OPT_ADDR, C_PRINT_STR, C_PRINT_VAR = range(4)
 
@@ -31,29 +35,47 @@ NAMES = {
          A_PRINT: "print",
          A_READ: "read",
          A_WHILE: "while",
+         A_FUNCTION: "function",
+         A_RETURN: "return",
         }
 
-START_LIST = (VAR1, PRINT, IF, ELSE, ENDIF, WHILE, ENDWHILE)
+START_LIST = (VAR1, PRINT, IF, ELSE, ENDIF, WHILE, ENDWHILE, \
+              FUNCTION, RETURN, ENDFUNC)
 RANGES_LIST = (T_BEGIN, T_END)
 LINE_END = (CTRLEND, OPEREND)
 EXPRESSIONS_STATES = (EXPR1, EXPR2, EXPR3)
 links = {
          START: (START_LIST, None),
+
          VAR1: ((ASSIGN, ), (T_VAR,)),
          ASSIGN: ((EXPR1, ), (T_EQ,)),
          EXPR1: ((OPEREND, ), None),
+         OPEREND: (START_LIST, (T_OPEREND,)),
+
          PRINT: ((VAR2, STRING, ), (T_PRINT, T_READ)),
          VAR2: ((OPEREND, ), (T_VAR,)),
          STRING: ((OPEREND, ), (T_STRING,)),
+
          IF: ((EXPR2, ), (T_IF,)),
          EXPR2: ((CTRLEND, ), None),
-         OPEREND: (START_LIST, (T_OPEREND,)),
          CTRLEND: (START_LIST, (T_CTRLEND,)),
          ELSE: ((CTRLEND,), (T_ELSE,)),
          ENDIF: ((OPEREND,), (T_ENDIF,)),
+
          WHILE: ((EXPR3, ), (T_WHILE,)),
          EXPR3: ((CTRLEND, ), None),
          ENDWHILE: ((OPEREND,), (T_ENDWHILE,)),
+
+         FUNCTION: ( (FUNCNAME,), (T_FUNCTION,) ),
+         FUNCNAME: ( (FUNCARGSSTART,), (T_VAR,) ),
+         FUNCARGSSTART: ( (FUNCARGSEND, FUNCARG), (T_POPEN,) ),
+         FUNCARG: ( (FUNCARGSEND, FUNCARGSEP), (T_VAR,) ),
+         FUNCARGSEP: ( (FUNCARG, ), (T_SEPARATOR,) ),
+         FUNCARGSEND: ( (START_LIST), (T_PCLOSE,) ),
+         ENDFUNC: ((OPEREND,), (T_ENDFUNC,)),
+
+         RETURN:  ( (VAR3,), (T_RETURN,) ),
+         VAR3: ((OPEREND, ), (T_VAR,)),
         }
 
 SYMB_DICT = {
@@ -73,6 +95,7 @@ SYMB_DICT = {
               ')': T_PCLOSE,
               '{': T_BEGIN,
               '}': T_END,
+              ',': T_SEPARATOR,
             }
 
 RESERVED_WORDS = {
@@ -83,6 +106,9 @@ RESERVED_WORDS = {
               'endif': T_ENDIF,
               'while': T_WHILE,
               'endwhile': T_ENDWHILE,
+              'function': T_FUNCTION,
+              'return': T_RETURN,
+              'endfunc': T_ENDFUNC,
             }
 
 

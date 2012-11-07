@@ -1,0 +1,15 @@
+function f1(x)
+    y = x+10;
+    return y;
+endfunc;
+
+i = 5;
+print i;
+print "\n";
+
+j = 0-5;
+print i;
+print "\n";
+
+print j;
+print "\n";

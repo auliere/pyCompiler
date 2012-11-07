@@ -77,6 +77,8 @@ def nasm_gen(l):
             cmd = ["jmp %s" % l[2]]
         else:
             cmd = ["%s %s" % (l[1],l[2])]
+    elif l[0] == C_RET:
+        cmd = ["ret"]
     else:
         raise ParserError("Can't translate %d command" % l[0])
 

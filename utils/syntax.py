@@ -98,6 +98,13 @@ def m_expressions():
             global_stack.append(res)
             global_lex.append(token)
 
+class FunctionDescription(object):
+    def __init__(self):
+        self.name = None
+        self.args = []
+    def __repr__(self):
+        return "%s%s" % (self.name, self.args)
+
 def m_default():
     global gres, global_lex
     ptype = START
@@ -125,6 +132,7 @@ def m_default():
     stack = []
     gres.append(A_BLOCK)
     current_line = -1
+    func = None
 
     while True:
         token = (yield)
@@ -168,12 +176,22 @@ def m_default():
         elif ctype == T_ENDWHILE:
             stack.append(T_ENDWHILE)
 
+        elif ctype == T_ENDFUNC:
+            stack.append(T_ENDFUNC)
+
+        elif ctype == T_RETURN:
+            stack.append(T_RETURN)
+
         elif ctype == T_OPEREND:
             operation = stack.pop()
             if operation == T_EQ:
                 if ptype == EXPR1:
                     op = (A_ASSIGN, [gres.pop(), global_stack.pop()])
                     gres.append(op)
+
+            elif operation == T_RETURN:
+                op = (A_RETURN, gres.pop())
+                gres.append(op)
 
             elif operation == T_PRINT:
                 op = (A_PRINT, gres.pop())
@@ -196,6 +214,18 @@ def m_default():
                 op = (A_WHILE, [global_stack.pop(), block])
                 gres.append(op)
 
+            elif operation == T_ENDFUNC:
+                extract_block(A_FUNCTION)
+                block = gres.pop()
+                op = (A_FUNCTION, [func, block])
+                gres.append(op)
+
+            elif operation == T_ENDFUNC:
+                extract_block(A_FUNCTION)
+                block = gres.pop()
+                op = (A_FUNCTION, [global_stack.pop(), block])
+                gres.append(op)
+
             ptype = START
             waitfor = links[ptype][0]
             continue
@@ -215,12 +245,6 @@ def m_default():
             waitfor = links[ptype][0]
             continue
 
-        elif ctype == T_VAR:
-            gres.append(token)
-
-        elif ctype == T_STRING:
-            gres.append(token)
-
         elif ctype in [T_PRINT, T_READ]:
             stack.append(ctype)
 
@@ -239,6 +263,26 @@ def m_default():
             raise ParserError("Syntax error")
 
         ptype = possibles[0]
+
+        if ptype == FUNCTION:
+            func = FunctionDescription()
+
+        elif ptype == FUNCNAME:
+            func.name = token
+
+        elif ptype == FUNCARG:
+            func.args.append(token)
+
+        elif ptype == FUNCARGSEND:
+            gres.append(A_FUNCTION)
+
+        elif ptype in [VAR1, VAR2, VAR3]:
+            gres.append(token)
+
+        elif ptype == STRING:
+            gres.append(token)
+
+        
         waitfor = links[ptype][0]
 
         if len(waitfor) == 1 and waitfor[0] in EXPRESSIONS_STATES:
