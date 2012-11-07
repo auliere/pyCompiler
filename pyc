@@ -111,6 +111,14 @@ def do_gen_asm(args, p):
     return p
 
 @verbose_output
+def do_optimization(args, p):
+    print("Optimization: ", end="")
+    res = p
+    print("Done")
+
+    return res
+
+@verbose_output
 def do_compile(args):
     lstfile_name = build_file_path(args.file, 'lst')
     asmfile_name = build_file_path(args.file, 'asm')
@@ -166,6 +174,7 @@ def main():
     parser.add_argument('-v', '--verbose', action="store_true", help="print information")
     parser.add_argument('-c', '--asm', action="store_true", help="save asm file")
     parser.add_argument('-t', '--lst', action="store_true", help="listing")
+    parser.add_argument('-O', action="store_true", help="internal optimization")
     parser.add_argument('-no', '--no-optimize', action="store_true", help="no -O2 option for nasm")
     parser.add_argument('-a', '--all-intermediate', action="store_true", help="Synonym for -slct")
 
@@ -182,6 +191,8 @@ def main():
         tree = do_synt(args, do_lex(args) )
 
         p = do_gen_pseudo_asm(args, tree, do_stats(args, tree) )
+        if args.O:
+            p = do_optimization(args, p)
         do_gen_asm(args, p)
         do_compile(args)
         do_link(args)
