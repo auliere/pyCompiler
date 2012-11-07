@@ -18,6 +18,8 @@ def typeof(t):
         return SYMB_DICT[t]
     elif t[0] == '"' and t[-1] == '"':
         return T_STRING
+    elif t.isalnum():
+        return T_VAR
     else:
         return T_NO
 

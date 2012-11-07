@@ -1,5 +1,5 @@
-read i;
-j=i*5/2;
+read i2;
+j=i2*5/2;
 print j;
 print "\n";
 k=j%7;
