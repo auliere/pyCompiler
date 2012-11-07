@@ -106,10 +106,10 @@ def do_compile(args):
               '-l' if args.lst else '', lstfile_name if args.lst else '', asmfile_name]
     try:
         if args.verbose: print('\n', ' '.join(params))
-        res = subprocess.check_output(params)
+        subprocess.check_output(params)
     except subprocess.CalledProcessError:
         print("NASM Error!", file=sys.stderr)
-        print(res)
+        # print(res)
         sys.exit(-1)
     except OSError:
         print("NASM not found", file=sys.stderr)
