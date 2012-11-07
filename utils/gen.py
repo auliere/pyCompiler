@@ -42,12 +42,19 @@ def make_asm_node_p(p, cmd, o, v):
     p.text.append((cmd, o, v))
 
 class PseudoAsm(object):
-    def __init__(self):
-        self.text = []
-        self.data = []
-        self.labelNum = 0
-        self.ifNum = 0
-        self.loopNum = 0
+    def __init__(self, p=None):
+        if p is None:
+            self.text = []
+            self.data = []
+            self.labelNum = 0
+            self.ifNum = 0
+            self.loopNum = 0
+        else:
+            self.text = p.text[:]
+            self.data = p.data[:]
+            self.labelNum = p.labelNum
+            self.ifNum = p.ifNum
+            self.loopNum = p.loopNum
 
 def gen_text_section(t, stat, p=None):
     if p == None:

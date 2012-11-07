@@ -4,7 +4,7 @@ from utils.gen import find_vars
 # from utils import ParserError
 from utils.const import *
 
-from nose.tools import assert_equal, assert_false, assert_true, nottest#, raises, nottest
+from nose.tools import assert_equal, assert_false, assert_true
 
 class TestSyntax(object):
     @classmethod

@@ -39,7 +39,7 @@ def nasm_gen(l):
     elif l[0] == C_INT:
         cmd = ["int %s" % l[2]]
     elif l[0] == C_MOV:
-        cmd = ["mov %s, %s" % (operand(l[2][0], l[1][0]),
+        cmd = ["mov dword %s, %s" % (operand(l[2][0], l[1][0]),
                               operand(l[2][1], l[1][1]))]
     elif l[0] == C_ADD:
         cmd = ["add %s, %s" % (operand(l[2][0], l[1][0]),

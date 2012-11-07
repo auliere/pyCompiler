@@ -12,6 +12,7 @@ from utils.lexer import lex
 from utils.syntax import synt, print_tree
 from utils.gen import find_vars, gen_code
 from utils.gen_asm import gen_real_asm
+from utils.optimizer import optimize
 from utils import ParserError, verbose_output
 
 VERSION = (0,1)
@@ -113,7 +114,7 @@ def do_gen_asm(args, p):
 @verbose_output
 def do_optimization(args, p):
     print("Optimization: ", end="")
-    res = p
+    res = optimize(p)
     print("Done")
 
     return res
@@ -174,7 +175,7 @@ def main():
     parser.add_argument('-v', '--verbose', action="store_true", help="print information")
     parser.add_argument('-c', '--asm', action="store_true", help="save asm file")
     parser.add_argument('-t', '--lst', action="store_true", help="listing")
-    parser.add_argument('-O', action="store_true", help="internal optimization")
+    parser.add_argument('-O0', action="store_true", help="no internal optimization")
     parser.add_argument('-no', '--no-optimize', action="store_true", help="no -O2 option for nasm")
     parser.add_argument('-a', '--all-intermediate', action="store_true", help="Synonym for -slct")
 
@@ -191,7 +192,7 @@ def main():
         tree = do_synt(args, do_lex(args) )
 
         p = do_gen_pseudo_asm(args, tree, do_stats(args, tree) )
-        if args.O:
+        if not args.O0:
             p = do_optimization(args, p)
         do_gen_asm(args, p)
         do_compile(args)
