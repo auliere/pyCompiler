@@ -167,21 +167,6 @@ def m_default():
                 gres.append((A_BLOCK, group))
             continue
 
-        elif ctype == T_ELSE:
-            stack.append(T_ELSE)
-
-        elif ctype == T_ENDIF:
-            stack.append(T_ENDIF)
-
-        elif ctype == T_ENDWHILE:
-            stack.append(T_ENDWHILE)
-
-        elif ctype == T_ENDFUNC:
-            stack.append(T_ENDFUNC)
-
-        elif ctype == T_RETURN:
-            stack.append(T_RETURN)
-
         elif ctype == T_OPEREND:
             operation = stack.pop()
             if operation == T_EQ:
@@ -245,9 +230,6 @@ def m_default():
             waitfor = links[ptype][0]
             continue
 
-        elif ctype in [T_PRINT, T_READ]:
-            stack.append(ctype)
-
         #Next state
         possibles = []
         
@@ -281,6 +263,24 @@ def m_default():
 
         elif ptype == STRING:
             gres.append(token)
+
+        elif ptype == ELSE:
+            stack.append(T_ELSE)
+
+        elif ptype == ENDIF:
+            stack.append(T_ENDIF)
+
+        elif ptype == ENDWHILE:
+            stack.append(T_ENDWHILE)
+
+        elif ptype == ENDFUNC:
+            stack.append(T_ENDFUNC)
+
+        elif ptype == RETURN:
+            stack.append(T_RETURN)
+
+        elif ptype == PRINT:
+            stack.append(ctype)
 
         
         waitfor = links[ptype][0]
