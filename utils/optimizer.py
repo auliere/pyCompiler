@@ -2,16 +2,36 @@
 from utils.const import *
 from utils.gen import PseudoAsm
 
-def optimize(pseudo):
+def optimize(pseudo, num=2):
+    text = pseudo
+    for x in xrange(num):
+        text = do_optimize(text)
+    return text
+
+def do_optimize(pseudo):
     pseudo = PseudoAsm(pseudo)
     
     text = pseudo.text
     text = optimize_push_pop(text)
     text = optimize_mov(text)
     text = optimize_mov_push(text)
+    text = optimize_mov_to_self(text)
     
     pseudo.text = text
     return pseudo
+
+def optimize_mov_to_self(text):
+    " reduce mov (mov eax,eax) "
+    result = []
+    for i,op in enumerate(text):
+        if op[0] == C_MOV:
+            if (op[2][0] == op[2][1]) and (op[1][0] == op[1][1]):
+                pass
+            else:
+                result.append(op)
+        else:
+            result.append(op)
+    return result
 
 def optimize_push_pop(text):
     " reduce push and pop sequences "
