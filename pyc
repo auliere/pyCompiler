@@ -11,6 +11,7 @@ import subprocess
 from utils.lexer import lex
 from utils.syntax import synt, print_tree
 from utils.gen import find_vars, gen_code
+from utils.gen_asm import gen_real_asm
 from utils import ParserError, verbose_output
 
 VERSION = (0,1)
@@ -82,17 +83,32 @@ def do_stats(args, tree):
     return stat
 
 @verbose_output
-def do_gen_asm(args, tree, stat):
+def do_gen_pseudo_asm(args, tree, stat):
+    print("Generate Pseudo-Asm code: ", end="")
+    p = gen_code(tree, stat)
+
+    print("Done")
+
+    return p
+
+@verbose_output
+def do_gen_asm(args, p):
     fl = os.path.basename(args.file)
     asmfile_name = build_file_path(args.file, 'asm')
 
     print("Generate NASM code: ", end="")
     
     asmfile = open(asmfile_name, 'w')
-    gen_code(tree, os.path.basename(fl), stat, f=asmfile)
+    lines = gen_real_asm(p, os.path.basename(fl))
+
+    for line in lines:
+        print(line, file=asmfile)
+
     asmfile.close()
 
     print("Done")
+
+    return p
 
 @verbose_output
 def do_compile(args):
@@ -165,7 +181,8 @@ def main():
     try:
         tree = do_synt(args, do_lex(args) )
 
-        do_gen_asm(args, tree, do_stats(args, tree) )
+        p = do_gen_pseudo_asm(args, tree, do_stats(args, tree) )
+        do_gen_asm(args, p)
         do_compile(args)
         do_link(args)
 

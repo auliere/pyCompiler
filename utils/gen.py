@@ -1,11 +1,9 @@
 from __future__ import print_function
 
-import sys
 from functools import partial
 
 from utils.const import *
 from utils import ParserError, typeof
-from utils.gen_asm import gen_asm
 
 class TreeStats(object):
     def __init__(self, vars=None, strs=None):
@@ -199,7 +197,7 @@ def clear_string(s):
     r = "\",10,\"".join(r.split("\\n"))
     return r
 
-def gen_code(t, srcfile, stat, f=sys.stdout):
+def gen_code(t, stat):
     p = PseudoAsm()
 
     p.data.append((C_EQU, "_kernel_", "0x80"))
@@ -249,7 +247,4 @@ def gen_code(t, srcfile, stat, f=sys.stdout):
     p.text.append((C_MOV, [C_OPT_NO, C_OPT_NO], ["eax", "1"]))
     p.text.append((C_INT, None, "_kernel_"))
     
-    lines = gen_asm(p, srcfile)
-
-    for line in lines:
-        print(line, file=f)
+    return p

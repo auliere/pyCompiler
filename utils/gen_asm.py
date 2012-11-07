@@ -5,7 +5,7 @@ from time import strftime, gmtime
 from utils.const import *
 from utils import ParserError
 
-def gen_asm(pseudo, src_file):
+def gen_real_asm(pseudo, src_file):
     res = []
     res.append("; Source file: %s" % src_file)
     res.append("; Generated %s" % strftime("%Y-%m-%d %H:%M:%S", gmtime()))

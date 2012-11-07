@@ -1,6 +1,7 @@
 from utils.lexer import lex
 from utils.syntax import synt
 from utils.gen import find_vars, gen_code
+from utils.gen_asm import gen_real_asm
 from nose.tools import assert_equal, nottest
 
 import os
@@ -36,7 +37,15 @@ class TestGenerator(object):
         src = file(os.path.join(os.getcwd(), 'tests/test_set/', f_name)).read()
         tree = synt(lex(src))
         asm = os.path.join(os.getcwd(), 'tests/test_set/', f_name) + '.asm'
-        gen_code(tree, 'TEST', find_vars(tree), f=file(asm, 'w'))
+        p = gen_code(tree, find_vars(tree))
+
+        lines = gen_real_asm(p, 'TEST')
+        
+        f = file(asm, 'w')
+        for line in lines:
+            print>>f, line
+        f.close()
+
         o = os.path.join(os.getcwd(), 'tests/test_set/', f_name) + '.o'
         bin = os.path.join(os.getcwd(), 'tests/test_set/', f_name) + '.bin'
         subprocess.check_call('nasm -f elf %s -o %s' % (asm, o), shell=True)
