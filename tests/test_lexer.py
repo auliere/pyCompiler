@@ -1,7 +1,7 @@
 from utils.lexer import lex
 from utils import ParserError
 
-from nose.tools import assert_equal, raises, nottest
+from nose.tools import assert_equal, raises
 
 class TestLexer(object):
     @classmethod
@@ -39,7 +39,6 @@ class TestLexer(object):
         s = 'x #text\n 1'
         assert_equal(lex(s), ['x','1'])
 
-    @nottest
     def test_combined_vars(self):
         s = 'x1 = 1 + y2'
         assert_equal(lex(s), ['x1', '=', '1', '+', 'y2'])

@@ -70,7 +70,8 @@ def lex(text):
         if current_type == COMMENT:
             inline_comment = True
             continue
-        if (prev_type == current_type) and (current_type != SYMB or symb_check(token, s)):
+        if ((prev_type == current_type) or (prev_type == ALPHA and current_type == NUM)) \
+            and (current_type != SYMB or symb_check(token, s)):
             token.append(s)
         else:
             if prev_type != NO:
