@@ -1,0 +1,13 @@
+function add10(x)
+    R = x+10;
+    return R;
+endfunc;
+
+function mul(x,y)
+    R = x*y;
+    return R;
+endfunc;
+
+read i;
+j = -mul(15, add10(i)*2);
+print j;

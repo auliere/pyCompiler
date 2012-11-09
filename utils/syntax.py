@@ -4,10 +4,12 @@ import sys
 
 from utils import ParserError
 from const import *
-from . import typeof
+from . import typeof, FunctionCallInfo
 
 MACHINE_DEFAULT, MACHINE_EXPR = range(2)
 machine = []
+
+DEBUG = True
 
 def synt(lex):
     global global_lex, global_stack, gres
@@ -38,7 +40,9 @@ def m_expressions():
 
     weights = {
                 T_POPEN: 0,
+                T_CALL: 0,
                 T_PCLOSE: 1,
+                T_SEPARATOR: 2,
                 T_PLUS: 20,
                 T_MINUS: 20,
                 T_IMUL: 10,
@@ -72,10 +76,15 @@ def m_expressions():
 
         if token_type in [T_VAR, T_NUMBER]:
             res.append(token)
+            if DEBUG: print (stack, res)
             continue
 
-        if token_type in [T_POPEN, ]:
-            stack.append(token)
+        if token_type in [T_POPEN, ]: #parentheses or function call
+            if (len(res) > 0) and typeof(res[-1]) == T_VAR:
+                stack.append(FunctionCallInfo(res.pop(), len(res)))
+            else:
+                stack.append(token)
+            if DEBUG: print (stack, res)
             continue
 
         while (len(stack) != 0) and (weights[token_type] <= weights[typeof(stack[-1])]):
@@ -85,12 +94,27 @@ def m_expressions():
             res.append(op)
 
         if token_type in [T_PCLOSE, ]:
-            stack.pop()
+            oper = stack.pop()
+            if typeof(oper) == T_CALL:
+                #function
+                args_count = len(res)-oper.args
+                if DEBUG: print (oper, args_count, res[-args_count:])
+                if args_count > 0:
+                    args = res[-args_count:]
+                    del res[-args_count:]
+                else:
+                    args = []
+                res.append( (A_CALL, oper, args) )
+
+            if DEBUG: print (stack, res)
             continue
 
         if len(stack)==0 or (weights[token_type] > weights[typeof(stack[-1])]):
-            stack.append(token)
-        
+            if token_type != T_SEPARATOR:
+                stack.append(token)
+
+        if DEBUG: print (stack, res)
+
         if token_type not in EXPRESSIONS_TOKENS:
             stack.pop()
             assert len(stack) == 0

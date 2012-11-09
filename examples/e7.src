@@ -1,0 +1,9 @@
+function mul(x,y)
+    R = x+y;
+    return R;
+endfunc;
+
+#i = 1+plus10(5+mul(7-2, 3)/2);
+i = mul(5,2);
+print i;
+print "\n";

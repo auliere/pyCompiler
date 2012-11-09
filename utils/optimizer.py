@@ -13,9 +13,9 @@ def do_optimize(pseudo):
     
     text = pseudo.text
     text = optimize_push_pop(text)
-    text = optimize_mov(text)
-    text = optimize_mov_push(text)
-    text = optimize_mov_to_self(text)
+    # text = optimize_mov(text)
+    # text = optimize_mov_push(text)
+    # text = optimize_mov_to_self(text)
     
     pseudo.text = text
     return pseudo
@@ -37,20 +37,32 @@ def optimize_push_pop(text):
     " reduce push and pop sequences "
     stack = []
     result = []
+    ires = []
     for i,op in enumerate(text):
         if op[0] == C_PUSH:
             stack.append(op)
         elif op[0] == C_POP:
             if len(stack) > 0:
                 v = stack.pop()
-                result.append( (C_MOV, [C_OPT_NO, v[1]], (op[2],v[2])) )
+                can_reduce = True
+                for s in ires:
+                    if s[0] == C_MOV:
+                        can_reduce = can_reduce and (s[2][0] != v[2]) and (s[2][1] != v[2])
+                
+                if can_reduce:
+                    ires.append( (C_MOV, [C_OPT_NO, v[1]], (op[2],v[2])) )
+                else:
+                    ires.insert(0,v)
+                    ires.append(op)
             else:
-                result.append(op)
+                ires.append(op)
         elif op[0] == C_COMMENT:
             result.append(op)
         else:
             result += stack
             stack = []
+            result += ires
+            ires = []
             result.append(op)
     result += stack
     return result
@@ -63,7 +75,8 @@ def optimize_mov(text):
         if op[0] == C_MOV:
             if prev_mov is not None:
                 v = prev_mov
-                if (v[2][0] == op[2][1]) and (v[1][0] == op[1][1]):
+                if (v[2][0] == op[2][1]) and (v[1][0] == op[1][1]) and \
+                   (not (op[1][0] == v[1][1] and op[1][0] == C_OPT_ADDR)):
                     result.append( (C_MOV, [op[1][0], v[1][1]], (op[2][0], v[2][1])) )
                     prev_mov = None
                 else:
@@ -112,3 +125,34 @@ def optimize_mov_push(text):
     if prev_mov is not None:
         result += prev_mov
     return result
+
+# def optimize_pop_mov(text):
+#     " reduce mov after pop (pop eax; mov [x], eax) "
+#     prev_pop = None
+#     result = []
+#     for i,op in enumerate(text):
+#         if op[0] == C_POP:
+#             if prev_mov is not None:
+#                 result.append(prev_pop)
+#             prev_pop = op
+#         elif op[0] == C_MOV:
+#             if prev_pop is not None:
+#                 v = prev_pop
+#                 if (v[2] == op[2][1]) and (v[1] == op[1][1]):
+#                     result.append( (C_POP, v[1][1], v[2][1] ) )
+#                 else:
+#                     result.append(prev_mov)
+#                     result.append(op)
+#             else:
+#                 result.append(op)
+#             prev_mov = None
+#         elif op[0] == C_COMMENT:
+#             result.append(op)
+#         else:
+#             if prev_mov is not None:
+#                 result.append(prev_mov)
+#             prev_mov = None
+#             result.append(op)
+#     if prev_mov is not None:
+#         result += prev_mov
+#     return result

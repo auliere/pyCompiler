@@ -80,3 +80,8 @@ class TestGenerator(object):
     def test_while(self):
         " while loop "
         assert_equal(self.run("5").strip(), '50')
+
+    @compile_src("t6.src")
+    def test_func(self):
+        " functions "
+        assert_equal(self.run("5").strip(), '-450')

@@ -6,14 +6,17 @@ from utils.const import *
 from utils import ParserError, typeof
 
 class TreeStats(object):
-    def __init__(self, vars=None, strs=None):
+    def __init__(self, vars=None, strs=None, funcs=None):
         if vars is None:
             vars = []
         if strs is None:
             strs = []
+        if funcs is None:
+            funcs = {}
 
         self.vars = vars
         self.strs = strs
+        self.funcs = funcs
         self.use_print = False
         self.use_read = False
 
@@ -29,6 +32,8 @@ def find_vars(t, stat=None, prefix=""):
         elif t[0] == A_READ:
             stat.use_read = True
         if t[0] == A_FUNCTION:
+            stat.funcs[t[1][0].name] = {'args':t[1][0].args, 
+                                        'args_count': len(t[1][0].args)}
             for v in t[1][0].args:
                 stat.vars.append("%s_%s" % (t[1][0].name, v))
             find_vars(t[1][1], stat=stat, prefix=t[1][0].name+"_")
@@ -79,6 +84,7 @@ def gen_text_section(t, stat, p=None, prefix=""):
     aa_cmp = partial(make_asm_node, cmd=C_CMP, o=None)
     aa_jmp = partial(make_asm_node, cmd=C_JMP)
     aa_label = partial(make_asm_node, cmd=C_LABEL, o=None)
+    aa_neg = partial(make_asm_node, cmd=C_NEG, o=None)
     aa_push_num = partial(aa_push, o=C_OPT_NO)
     aa_push_addr = partial(aa_push, o=C_OPT_ADDR)
     aa_ret = partial(make_asm_node, cmd=C_RET, o=None, v=None)
@@ -105,9 +111,10 @@ def gen_text_section(t, stat, p=None, prefix=""):
             p.funcNum += 1
             aa_jmp(o=None, v="Func%dEnd" % p.funcNum)
             aa_label(v="Func_%s" % node[1][0].name)
-            for arg in node[1][0].args:
+            for i,arg in enumerate(node[1][0].args):
                 var = "v%s_%s" % (node[1][0].name, arg)
-                aa_pop(v="eax")
+                # aa_pop(v="eax")
+                aa_mov(o=[C_OPT_NO, C_OPT_ADDR], v=["eax", "esp+%d" % ((i+1)*4)])
                 aa_mov(o=[C_OPT_ADDR, C_OPT_NO], v=[var, "eax"])
             gen_text_section(node[1][1], stat, p=p, prefix=node[1][0].name+"_")
             aa_label(v="Func%dEnd" % p.funcNum)
@@ -115,7 +122,7 @@ def gen_text_section(t, stat, p=None, prefix=""):
         elif node[0] == A_RETURN:
             # print (node[1])
             aa_mov(o=[C_OPT_NO, C_OPT_ADDR], v=["eax", "v%s" % prefix+node[1]])
-            aa_push_num(v="eax")
+            # aa_push_num(v="eax")
             aa_ret()
 
         elif node[0] == A_PRINT:
@@ -199,10 +206,15 @@ def gen_text_section(t, stat, p=None, prefix=""):
 
         elif node[0] == '-':
             gen_text_section(node[1], stat, p=p, prefix=prefix)
-            aa_pop(v="eax")
-            aa_pop(v="ebx")
-            aa_sub(o=[C_OPT_NO, C_OPT_NO], v=["eax", "ebx"])
-            aa_push_num(v="eax")
+            if len(node[1]) == 2:
+                aa_pop(v="eax")
+                aa_pop(v="ebx")
+                aa_sub(o=[C_OPT_NO, C_OPT_NO], v=["eax", "ebx"])
+                aa_push_num(v="eax")
+            else:
+                aa_pop(v="eax")
+                aa_neg(v="eax")
+                aa_push_num(v="eax")
 
         elif node[0] == '*':
             gen_text_section(node[1], stat, p=p, prefix=prefix)
@@ -239,6 +251,18 @@ def gen_text_section(t, stat, p=None, prefix=""):
 
             aa_jmp(o=None, v="llWhile%d" % p.loopNum)
             aa_label(v="llWhile%dEnd" % p.loopNum)
+
+        elif node[0] == A_CALL:
+            if stat.funcs[node[1]]['args_count'] != len(node[2]):
+                raise ParserError("Call %s passing %d arguments. %d expected" % 
+                    (node[1], len(node[2]), stat.funcs[node[1]]['args_count']))
+            
+            for arg in node[2]:
+                gen_text_section(arg, stat, p=p, prefix=prefix)
+
+            aa_call(v="Func_%s" % node[1])
+            aa_add(o=[C_OPT_NO, C_OPT_NO], v=["esp", str(4*len(node[2]))])
+            aa_push_num(v="eax")
 
         elif node[0] in ['/', '%']:
             raise NotImplementedError("%s operation is not implemented yet" % node[0])

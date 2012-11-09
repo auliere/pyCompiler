@@ -70,6 +70,8 @@ def nasm_gen(l):
         cmd = ["global %s" % l[2]]
     elif l[0] == C_EXTRN:
         cmd = ["extern %s" % l[2]]
+    elif l[0] == C_NEG:
+        cmd = ["neg %s" % l[2]]
     elif l[0] == C_LABEL:
         cmd = ["%s:" % l[2]]
     elif l[0] == C_JMP:

@@ -8,6 +8,11 @@ def typeof(t):
     if t == None:
         return T_NO
 
+    if isinstance(t, FunctionCallInfo):
+        return T_CALL
+    if not isinstance(t, str):
+        return T_NO
+
     if t.isalpha():
         if t in RESERVED_WORDS:
             return RESERVED_WORDS[t]
@@ -22,6 +27,12 @@ def typeof(t):
         return T_VAR
     else:
         return T_NO
+
+class FunctionCallInfo(str):
+    def __new__(cls, name, args):
+        s = super(FunctionCallInfo, cls).__new__(cls, name)
+        s.args = args
+        return s
 
 def verbose_output(func):
     """ 
