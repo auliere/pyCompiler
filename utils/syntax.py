@@ -215,6 +215,7 @@ def m_default():
                 elseblock = gres.pop()
                 thenblock = gres.pop()
                 op = (A_IF, [global_stack.pop(), thenblock, elseblock])
+                print (op)
                 gres.append(op)
 
             elif operation == T_ENDWHILE:
