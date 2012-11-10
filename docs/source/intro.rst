@@ -5,7 +5,8 @@
 
  #) :doc:`lex`,
  #) :doc:`synt`,
- #) :doc:`translator` (:doc:`grammary` описана далее, далее - "язык") на язык ассемблера в синтаксисе nasm,
+ #) :doc:`translator` (:doc:`grammary` описана далее, далее - "язык")
  #) :doc:`optimizer`;
+ #) :doc:`asmgen`;
 
 .. automodule:: pyCompiler

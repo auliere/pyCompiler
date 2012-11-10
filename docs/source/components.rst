@@ -7,3 +7,4 @@
    synt
    translator
    optimizer
+   asmgen
