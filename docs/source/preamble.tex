@@ -1,0 +1,35 @@
+
+\usepackage{textcase}
+\renewcommand{\maketitle}{
+  \begin{titlepage}
+    \let\footnotesize\small
+    \let\footnoterule\relax
+    \rule{\textwidth}{1pt}
+
+    \ifsphinxpdfoutput
+      \begingroup
+      \def\\{, }
+      \def\and{and }
+      \pdfinfo{
+        /Author (Радер Роман)
+        /Title (Курсова робота на тему <<Розробка компілятора для обчислювальної мови>>)
+      }
+      \endgroup
+    \fi
+    
+    {\large\centering{ МІНІСТЕРСТВО ОСВІТИ ТА НАУКИ УКРАЇНИ \\ НАЦІОНАЛЬНИЙ ТЕХНІЧНИЙ УНІВЕРСИТЕТ УКРАЇНИ <<КИЇВСЬКИЙ ПОЛІТЕХНІЧНИЙ ІНСТИТУТ>> } \par}%
+    \rule{\textwidth}{1pt}
+    \vfill
+    {\Huge\centering Курсова робота на тему\\<<Розробка компілятора для обчислювальної мови>> \par}%
+    \vfill
+    \begin{flushright}
+        \normalsize{Розробив: Радер Роман Ілліч\\Керівник: Пустоваров Володимир Ілліч\\Залікова книжка: 215 }
+    \end{flushright}
+    \vfill
+    \centering{Київ - 2012}
+  \end{titlepage}
+  \cleardoublepage
+  \setcounter{footnote}{0}%
+  \let\thanks\relax\let\maketitle\relax
+}
+

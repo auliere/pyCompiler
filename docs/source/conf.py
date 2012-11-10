@@ -13,6 +13,7 @@
 
 import sys, os
 
+import codecs
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -172,13 +173,16 @@ htmlhelp_basename = 'pyCompilerdoc'
 
 latex_elements = {
 # The paper size ('letterpaper' or 'a4paper').
-#'papersize': 'letterpaper',
+'papersize': 'a4paper',
 
 # The font size ('10pt', '11pt' or '12pt').
-#'pointsize': '10pt',
+'pointsize': '11pt',
 
+'classoptions': ',openany,oneside',
+
+'babel': '\\usepackage[russian]{babel}',
 # Additional stuff for the LaTeX preamble.
-#'preamble': '',
+'preamble': codecs.open("preamble.tex","r","utf-8").read(),
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
@@ -194,19 +198,19 @@ latex_documents = [
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
-#latex_use_parts = False
+latex_use_parts = True
 
 # If true, show page references after internal links.
-#latex_show_pagerefs = False
+latex_show_pagerefs = True
 
 # If true, show URL addresses after external links.
-#latex_show_urls = False
+latex_show_urls = True
 
 # Documents to append as an appendix to all manuals.
 #latex_appendices = []
 
 # If false, no module index is generated.
-#latex_domain_indices = True
+latex_domain_indices = False
 
 
 # -- Options for manual page output --------------------------------------------
@@ -219,7 +223,7 @@ man_pages = [
 ]
 
 # If true, show URL addresses after external links.
-#man_show_urls = False
+man_show_urls = True
 
 
 # -- Options for Texinfo output ------------------------------------------------
