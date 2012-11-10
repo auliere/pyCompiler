@@ -110,33 +110,36 @@ def optimize_mov_push(text):
     prev_mov = None
     result = []
     comments = []
+    ires = []
     for i,op in enumerate(text):
         if len(op)>3: offset = op[3]
         else: offset = 0
 
         if op[0] == C_MOV:
             if prev_mov is not None:
-                result.append(prev_mov)
+                ires.append(prev_mov)
             prev_mov = op
         elif op[0] == C_PUSH:
             if prev_mov is not None:
                 v = prev_mov
                 if (v[2][0] == op[2]) and (v[1][0] == op[1]):
-                    result.append( (C_PUSH, v[1][1], v[2][1], offset ) )
+                    ires.append( (C_PUSH, v[1][1], v[2][1], offset ) )
                 else:
-                    result.append(prev_mov)
-                    result.append(op)
+                    ires.append(prev_mov)
+                    ires.append(op)
             else:
-                result.append(op)
+                ires.append(op)
             prev_mov = None
         elif op[0] == C_COMMENT:
             comments.append(op)
         else:
             if prev_mov is not None:
-                result.append(prev_mov)
+                ires.append(prev_mov)
             prev_mov = None
             result += comments
             comments = []
+            result += ires
+            ires = []
             result.append(op)
     if prev_mov is not None:
         result += prev_mov

@@ -31,59 +31,61 @@ def operand(x, t):
 def nasm_gen(l):
     cmd = None
     if l[0] == C_PUSH:
-        cmd = ["push dword %s" % operand(l[2], l[1])]
+        cmd = ["push\tdword\t%s" % operand(l[2], l[1])]
     elif l[0] == C_POP:
-        cmd = ["pop dword %s" % l[2]]
+        cmd = ["pop\t\tdword\t%s" % l[2]]
     elif l[0] == C_CALL:
-        cmd = ["call  %s" % l[2]]
+        cmd = ["call\t%s" % l[2]]
     elif l[0] == C_INT:
-        cmd = ["int %s" % l[2]]
+        cmd = ["int\t%s" % l[2]]
     elif l[0] == C_MOV:
-        cmd = ["mov dword %s, %s" % (operand(l[2][0], l[1][0]),
+        cmd = ["mov\t\tdword\t%s, %s" % (operand(l[2][0], l[1][0]),
                               operand(l[2][1], l[1][1]))]
     elif l[0] == C_ADD:
-        cmd = ["add %s, %s" % (operand(l[2][0], l[1][0]),
+        cmd = ["add\t\t%s, %s" % (operand(l[2][0], l[1][0]),
                               operand(l[2][1], l[1][1]))]
     elif l[0] == C_IMUL: #
-        cmd = ["imul %s" % l[2]]
+        cmd = ["imul\t%s" % l[2]]
     elif l[0] == C_IDIV: #
-        cmd = ["idiv %s" % l[2]]
+        cmd = ["idiv\t%s" % l[2]]
     elif l[0] == C_SUB:
-        cmd = ["sub %s, %s" % (operand(l[2][0], l[1][0]),
+        cmd = ["sub\t\t%s, %s" % (operand(l[2][0], l[1][0]),
                               operand(l[2][1], l[1][1]))]
     elif l[0] == C_CMP:
-        cmd = ["cmp %s,%s" % (l[2][0], l[2][1])]
+        cmd = ["cmp\t%s,%s" % (l[2][0], l[2][1])]
     elif l[0] == C_COMMENT:
         if l[2] is None:
             cmd=[""]
         else:
             cmd = ["; %s" % l[2]]
     elif l[0] == C_EQU:
-        cmd = ["%s: equ %s" % (l[1], l[2])]
+        cmd = ["%s:\tequ\t%s" % (l[1], l[2])]
     elif l[0] == C_EQU_F:
-        cmd = ["%s: equ $-%s" % (l[1], l[2])]
+        cmd = ["%s:\tequ\t\t$-%s" % (l[1], l[2])]
     elif l[0] == C_DB:
-        cmd = ["%s: db %s" % (l[1],l[2])]
+        cmd = ["%s:\tdb\t\t%s" % (l[1],l[2])]
     elif l[0] == C_DD:
-        cmd = ["%s: dd %s" % (l[1],l[2])]
+        cmd = ["%s:\t\tdd\t%s" % (l[1],l[2])]
     elif l[0] == C_GLOBL:
-        cmd = ["global %s" % l[2]]
+        cmd = ["global\t%s" % l[2]]
     elif l[0] == C_EXTRN:
-        cmd = ["extern %s" % l[2]]
+        cmd = ["extern\t%s" % l[2]]
     elif l[0] == C_NEG:
-        cmd = ["neg %s" % l[2]]
+        cmd = ["neg\t%s" % l[2]]
     elif l[0] == C_LABEL:
         cmd = ["%s:" % l[2]]
     elif l[0] == C_JMP:
         if l[1] is None:
-            cmd = ["jmp %s" % l[2]]
+            cmd = ["jmp\t%s" % l[2]]
         else:
-            cmd = ["%s %s" % (l[1],l[2])]
+            cmd = ["%s\t%s" % (l[1],l[2])]
     elif l[0] == C_RET:
         cmd = ["ret"]
     else:
         raise ParserError("Can't translate %d command" % l[0])
-
+    
+    cmd = map(lambda x: "\t%s" % x, cmd)
+    
     if len(l)>3:
         return map(lambda x: "%s%s" % (l[3]*"\t", x), cmd)
     else: return cmd

@@ -289,7 +289,7 @@ def gen_code(t, stat):
         p.data.append((C_EQU_F, "lstr%d" % i, "str%d" % i))
 
     p.data.append((C_DB, "numbs", "\"%d\", 0"))
-    p.data.append((C_DB, "numbs_in_format", "\"%d\""))
+    p.data.append((C_DB, "numbs_in_format", "\"%d\",0"))
 
     p.data.append((C_COMMENT, None, "Variables"))
     
