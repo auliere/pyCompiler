@@ -260,7 +260,7 @@ def gen_text_section(t, stat, p=None, prefix=""):
                 raise ParserError("Call %s passing %d arguments. %d expected" % 
                     (node[1], len(node[2]), stat.funcs[node[1]]['args_count']))
             
-            for arg in node[2]:
+            for arg in reversed(node[2]):
                 gen_text_section(arg, stat, p=p, prefix=prefix)
 
             aa_call(v="Func_%s" % node[1])

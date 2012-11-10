@@ -1,0 +1,7 @@
+function minus(x,y)
+    R = x-y;
+    return R;
+endfunc;
+
+j = minus(5,10);
+print j;

@@ -85,3 +85,8 @@ class TestGenerator(object):
     def test_func(self):
         " functions "
         assert_equal(self.run("5").strip(), '-450')
+
+    @compile_src("t7.src")
+    def test_func_args(self):
+        " functions "
+        assert_equal(self.run().strip(), '-5')
