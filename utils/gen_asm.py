@@ -84,4 +84,6 @@ def nasm_gen(l):
     else:
         raise ParserError("Can't translate %d command" % l[0])
 
-    return cmd
+    if len(l)>3:
+        return map(lambda x: "%s%s" % (l[3]*"\t", x), cmd)
+    else: return cmd

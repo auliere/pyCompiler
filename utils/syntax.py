@@ -9,7 +9,7 @@ from . import typeof, FunctionCallInfo
 MACHINE_DEFAULT, MACHINE_EXPR = range(2)
 machine = []
 
-DEBUG = True
+DEBUG = False
 
 def synt(lex):
     global global_lex, global_stack, gres

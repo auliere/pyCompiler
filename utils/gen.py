@@ -48,8 +48,8 @@ def find_vars(t, stat=None, prefix=""):
                 stat.strs.append(t)
     return stat
 
-def make_asm_node_p(p, cmd, o, v):
-    p.text.append((cmd, o, v))
+def make_asm_node_p(p, cmd, o, v, shift=0):
+    p.text.append((cmd, o, v, shift,))
 
 class PseudoAsm(object):
     def __init__(self, p=None):
@@ -72,7 +72,7 @@ def gen_text_section(t, stat, p=None, prefix=""):
     if p == None:
         p = PseudoAsm()
 
-    make_asm_node = partial(make_asm_node_p, p=p)
+    make_asm_node = partial(make_asm_node_p, p=p, shift=(0 if len(prefix)==0 else 1 ))
     aa_push = partial(make_asm_node, cmd=C_PUSH)
     aa_pop = partial(make_asm_node, cmd=C_POP, o=None)
     aa_mov = partial(make_asm_node, cmd=C_MOV)
@@ -95,6 +95,7 @@ def gen_text_section(t, stat, p=None, prefix=""):
     if isinstance(t, (str, tuple)):
         iterate = [t]
     for node in iterate:
+        p.text.append((C_COMMENT, None, None))
         if isinstance(node, str):
             tnode = typeof(node)
             if tnode == T_NUMBER:
@@ -109,15 +110,17 @@ def gen_text_section(t, stat, p=None, prefix=""):
 
         elif node[0] == A_FUNCTION:
             p.funcNum += 1
-            aa_jmp(o=None, v="Func%dEnd" % p.funcNum)
-            aa_label(v="Func_%s" % node[1][0].name)
+            p.text.append((C_COMMENT, None, None))
+            p.text.append((C_COMMENT, None, "Function %s" % node[1][0].name))
+            aa_jmp(o=None, v="Func%dEnd" % p.funcNum, shift=1)
+            aa_label(v="Func_%s" % node[1][0].name, shift=1)
             for i,arg in enumerate(node[1][0].args):
                 var = "v%s_%s" % (node[1][0].name, arg)
-                # aa_pop(v="eax")
-                aa_mov(o=[C_OPT_NO, C_OPT_ADDR], v=["eax", "esp+%d" % ((i+1)*4)])
-                aa_mov(o=[C_OPT_ADDR, C_OPT_NO], v=[var, "eax"])
+                aa_mov(o=[C_OPT_NO, C_OPT_ADDR], v=["eax", "esp+%d" % ((i+1)*4)], shift=1)
+                aa_mov(o=[C_OPT_ADDR, C_OPT_NO], v=[var, "eax"], shift=1)
             gen_text_section(node[1][1], stat, p=p, prefix=node[1][0].name+"_")
-            aa_label(v="Func%dEnd" % p.funcNum)
+            aa_label(v="Func%dEnd" % p.funcNum, shift=1)
+
 
         elif node[0] == A_RETURN:
             # print (node[1])
@@ -268,8 +271,6 @@ def gen_text_section(t, stat, p=None, prefix=""):
             raise NotImplementedError("%s operation is not implemented yet" % node[0])
         else:
             raise ParserError("Error generating ASM code on node %s" % repr(node))
-
-    p.text.append((C_COMMENT, None, None))
 
 def clear_string(s):
     r = s
