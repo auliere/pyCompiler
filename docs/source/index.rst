@@ -10,8 +10,9 @@
    :maxdepth: 2
 
    intro
-   grammary
+   language
    components
+   instructions
 
 
 
