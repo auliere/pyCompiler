@@ -1,0 +1,6 @@
+	N = 1;
+	while N<=4:
+		print N;
+		print "\n";
+		N = N+1;
+	endwhile;

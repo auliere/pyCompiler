@@ -1,0 +1,8 @@
+function mod(m)
+    m = 1;
+    return m;
+endfunc;
+
+read x;
+j = mod(x);
+print x;

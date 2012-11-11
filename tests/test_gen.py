@@ -88,5 +88,10 @@ class TestGenerator(object):
 
     @compile_src("t7.src")
     def test_func_args(self):
-        " functions "
+        " functions arguments order "
         assert_equal(self.run().strip(), '-5')
+
+    @compile_src("t8.src")
+    def test_func_args_in(self):
+        " functions arguments by value "
+        assert_equal(self.run("50").strip(), '50')

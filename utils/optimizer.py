@@ -122,7 +122,7 @@ def optimize_mov_push(text):
         elif op[0] == C_PUSH:
             if prev_mov is not None:
                 v = prev_mov
-                if (v[2][0] == op[2]) and (v[1][0] == op[1]):
+                if (v[2][0] == op[2]) and (v[1][0] == op[1]) and (v[1][0] != C_OPT_ADDR):
                     ires.append( (C_PUSH, v[1][1], v[2][1], offset ) )
                 else:
                     ires.append(prev_mov)
