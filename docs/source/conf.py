@@ -177,7 +177,7 @@ latex_elements = {
 'papersize': 'a4paper',
 
 # The font size ('10pt', '11pt' or '12pt').
-'pointsize': '11pt',
+'pointsize': '12pt',
 
 'classoptions': ',openany,oneside',
 

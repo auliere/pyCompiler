@@ -3,7 +3,6 @@ function mul(x,y)
     return R;
 endfunc;
 
-#i = 1+plus10(5+mul(7-2, 3)/2);
-i = mul(5,2);
+read j;
+i = 5*mul(j,2);
 print i;
-print "\n";

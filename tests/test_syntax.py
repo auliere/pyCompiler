@@ -1,7 +1,6 @@
 from utils.lexer import lex
 from utils.syntax import synt
 from utils.gen import find_vars
-# from utils import ParserError
 from utils.const import *
 
 from nose.tools import assert_equal, assert_false, assert_true

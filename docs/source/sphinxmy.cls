@@ -107,8 +107,10 @@
 % Contents.
 % For an article document class this environment is a section,
 % so no page break before it.
+\newcommand{\mybibname}{}
 \let\py@OldThebibliography=\thebibliography
 \renewcommand{\thebibliography}[1]{
+  \renewcommand{\bibname}{\mybibname}
   \phantomsection
   \py@OldThebibliography{#1}
   \addcontentsline{toc}{section}{\bibname}

@@ -28,33 +28,38 @@
 ------------------------------------------
 Код на мові myl::
 
-	function mod(m)
-		m = 1;
-		return m;
+	function mul(x,y)
+	    R = x*y;
+	    return R;
 	endfunc;
 
-	read x;
-	j = mod(x);
-	print x;
+	read j;
+	i = 5*mul(j,2);
+	print i;
+	print "\n";
 
 Генерує такий код на асемблері
 
 .. code-block:: none
 
-	; Source file: t8.src
-	; Generated 2012-11-11 15:00:31
+	; Source file: e7.src
+	; Generated 2012-11-11 15:35:50
 
 	SECTION .data
+
 		_kernel_:	equ	0x80
 		; Strings
 		numbs:	db		"%d", 0
-		numbs_in_format: db	"%d",0
+		numbs_in_format:	db		"%d",0
 		; Variables
-		vmod_m:		dd	0
-		vx:		dd	0
+		vmul_x:		dd	0
+		vmul_y:		dd	0
+		vmul_R:		dd	0
 		vj:		dd	0
+		vi:		dd	0
 
 	SECTION .text
+
 		global	_start
 		extern	printf
 		extern	scanf
@@ -64,29 +69,41 @@
 		_start:
 		; setup stack frame
 		push	dword	ebp
-		mov		dword	ebp, esp
+		mov	dword	ebp, esp
 		
-		; Function mod
+		; Function mul
 			jmp	Func1End
-			Func_mod:
+			Func_mul:
+		
 			mov	dword	eax, [esp+4]
-			mov	dword	[vmod_m], eax
-			mov	dword	eax, 1
+			mov	dword	[vmul_x], eax
+			mov	dword	eax, [esp+8]
+			mov	dword	[vmul_y], eax
+			mov	dword	eax, [vmul_x]
+			mov	dword	ebx, [vmul_y]
+			imul	ebx
+		
 			ret
 			Func1End:
 		
-		push	dword	vx
+		push	dword	vj
 		push	dword	numbs_in_format
 		call	scanf
 		add	esp, 8
 		call	getchar
 		
-		push	dword	[vx]
-		call	Func_mod
-		add	esp, 4
+		push	dword	2
+		push	dword	[vj]
+		call	Func_mul
+		add	esp, 8
 		
-		mov	dword	[vj], eax
-		push	dword	[vx]
+		push	dword	eax
+		mov	dword	eax, 5
+		pop	dword	ebx
+		imul	ebx
+		
+		mov	dword	[vi], eax
+		push	dword	[vi]
 		push	dword	numbs
 		call	printf
 		add	esp, 8

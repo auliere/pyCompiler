@@ -15,7 +15,7 @@ from utils.gen_asm import gen_real_asm
 from utils.optimizer import optimize
 from utils import ParserError, verbose_output
 
-VERSION = (0,1)
+VERSION = (1,0)
 
 def print_header():
     print("pyCompiler %d.%d" % VERSION)

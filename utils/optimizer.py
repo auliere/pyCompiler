@@ -160,34 +160,3 @@ def optimize_clean_lines(text):
             result.append(op)
             n = 0
     return result
-
-# def optimize_pop_mov(text):
-#     " reduce mov after pop (pop eax; mov [x], eax) "
-#     prev_pop = None
-#     result = []
-#     for i,op in enumerate(text):
-#         if op[0] == C_POP:
-#             if prev_mov is not None:
-#                 result.append(prev_pop)
-#             prev_pop = op
-#         elif op[0] == C_MOV:
-#             if prev_pop is not None:
-#                 v = prev_pop
-#                 if (v[2] == op[2][1]) and (v[1] == op[1][1]):
-#                     result.append( (C_POP, v[1][1], v[2][1] ) )
-#                 else:
-#                     result.append(prev_mov)
-#                     result.append(op)
-#             else:
-#                 result.append(op)
-#             prev_mov = None
-#         elif op[0] == C_COMMENT:
-#             result.append(op)
-#         else:
-#             if prev_mov is not None:
-#                 result.append(prev_mov)
-#             prev_mov = None
-#             result.append(op)
-#     if prev_mov is not None:
-#         result += prev_mov
-#     return result
