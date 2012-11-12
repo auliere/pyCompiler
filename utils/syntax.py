@@ -1,3 +1,7 @@
+#-*- coding: utf8 -*-
+
+" Syntax analyser "
+
 from __future__ import print_function
 
 import sys
@@ -12,6 +16,7 @@ machine = []
 DEBUG = False
 
 def synt(lex):
+    " Builds syntax tree "
     global global_lex, global_stack, gres
     global_lex = []
     global_stack = []
@@ -34,6 +39,7 @@ gres = []
 global_lex = []
 
 def m_expressions():
+    " Machine for expression analysis "
     global global_lex
     stack = []
     res = []
@@ -63,11 +69,11 @@ def m_expressions():
 
     while True:
         token = (yield)
-        if hasattr(token, 'line'):
-            current_line = token.line
-
         if token == None:
             continue
+
+        if hasattr(token, 'line'):
+            current_line = token.line
 
         token_type = typeof(token)
 
@@ -76,7 +82,9 @@ def m_expressions():
 
         if token_type in [T_VAR, T_NUMBER]:
             res.append(token)
-            if DEBUG: print (stack, res)
+            #FIXME: replace by logging
+            if DEBUG:
+                print (stack, res)
             continue
 
         if token_type in [T_POPEN, ]: #parentheses or function call
@@ -84,21 +92,25 @@ def m_expressions():
                 stack.append(FunctionCallInfo(res.pop(), len(res)))
             else:
                 stack.append(token)
-            if DEBUG: print (stack, res)
+            if DEBUG:
+                print (stack, res)
             continue
 
-        while (len(stack) != 0) and (weights[token_type] <= weights[typeof(stack[-1])]):
-            op = (stack[-1], res[-2:])
+        while (len(stack) != 0) and \
+              (weights[token_type] <= weights[typeof(stack[-1])]):
+            operation = (stack[-1], res[-2:])
             del res[-2:]
             stack.pop()
-            res.append(op)
+            res.append(operation)
 
         if token_type in [T_PCLOSE, ]:
             oper = stack.pop()
             if typeof(oper) == T_CALL:
+                assert isinstance(oper, FunctionCallInfo)
                 #function
                 args_count = len(res)-oper.args
-                if DEBUG: print (oper, args_count, res[-args_count:])
+                if DEBUG:
+                    print (oper, args_count, res[-args_count:])
                 if args_count > 0:
                     args = res[-args_count:]
                     del res[-args_count:]
@@ -106,14 +118,16 @@ def m_expressions():
                     args = []
                 res.append( (A_CALL, oper, args) )
 
-            if DEBUG: print (stack, res)
+            if DEBUG: 
+                print (stack, res)
             continue
 
         if len(stack)==0 or (weights[token_type] > weights[typeof(stack[-1])]):
             if token_type != T_SEPARATOR:
                 stack.append(token)
 
-        if DEBUG: print (stack, res)
+        if DEBUG: 
+            print (stack, res)
 
         if token_type not in EXPRESSIONS_TOKENS:
             stack.pop()
@@ -168,7 +182,7 @@ def m_default():
 
         ctype = typeof(token)
         # check syntax errors
-        possibles = reduce(lambda a,b: a+b, map(lambda x:[] if links[x][1] == None else list(links[x][1]), waitfor))
+        possibles = reduce(lambda a,b: a+b, [[] if links[x][1] == None else list(links[x][1]) for x in waitfor])
         if possibles is None:
             possibles = []
         else:
@@ -177,84 +191,10 @@ def m_default():
         if possibles is not None and ctype not in possibles:
             raise ParserError('Syntax error on line %d' % current_line)
         if ctype == T_NO and token != None:
+            # FIXME: dead code?
             raise ParserError("Unknown token '%s' on line %d" % (token, current_line))
 
-        #Process state
-        if ctype == T_BEGIN:
-            gres.append(A_BLOCK)
-            continue
         
-        elif ctype == T_END:
-            group = []
-            extract_block(A_BLOCK)
-            if len(group)>0:
-                gres.append((A_BLOCK, group))
-            continue
-
-        elif ctype == T_OPEREND:
-            operation = stack.pop()
-            if operation == T_EQ:
-                if ptype == EXPR1:
-                    op = (A_ASSIGN, [gres.pop(), global_stack.pop()])
-                    gres.append(op)
-
-            elif operation == T_RETURN:
-                op = (A_RETURN, gres.pop())
-                gres.append(op)
-
-            elif operation == T_PRINT:
-                op = (A_PRINT, gres.pop())
-                gres.append(op)
-
-            elif operation == T_READ:
-                op = (A_READ, gres.pop())
-                gres.append(op)
-
-            elif operation == T_ENDIF:
-                extract_block(A_ELSE)
-                elseblock = gres.pop()
-                thenblock = gres.pop()
-                op = (A_IF, [global_stack.pop(), thenblock, elseblock])
-                print (op)
-                gres.append(op)
-
-            elif operation == T_ENDWHILE:
-                extract_block(A_WHILE)
-                block = gres.pop()
-                op = (A_WHILE, [global_stack.pop(), block])
-                gres.append(op)
-
-            elif operation == T_ENDFUNC:
-                extract_block(A_FUNCTION)
-                block = gres.pop()
-                op = (A_FUNCTION, [func, block])
-                gres.append(op)
-
-            elif operation == T_ENDFUNC:
-                extract_block(A_FUNCTION)
-                block = gres.pop()
-                op = (A_FUNCTION, [global_stack.pop(), block])
-                gres.append(op)
-
-            ptype = START
-            waitfor = links[ptype][0]
-            continue
-
-        elif ctype == T_CTRLEND:
-            operation = stack.pop()
-            if operation == T_IF:
-                gres.append(A_IF)
-
-            if operation == T_WHILE:
-                gres.append(A_WHILE)
-
-            if operation == T_ELSE:
-                extract_block(A_IF) #THEN-block
-                gres.append(A_ELSE)
-            ptype = START
-            waitfor = links[ptype][0]
-            continue
-
         #Next state
         possibles = []
         
@@ -271,6 +211,8 @@ def m_default():
 
         ptype = possibles[0]
 
+        #Process state
+
         if ptype == FUNCTION:
             func = FunctionDescription()
 
@@ -283,29 +225,66 @@ def m_default():
         elif ptype == FUNCARGSEND:
             gres.append(A_FUNCTION)
 
-        elif ptype in [VAR1, VAR2, VAR3]:
+        elif ptype == BEG:
+            gres.append(A_BLOCK)
+
+        elif ptype == END:
+            group = []
+            extract_block(A_BLOCK)
+            if len(group)>0:
+                gres.append((A_BLOCK, group))
+
+        elif ptype in [VAR1, VAR2, VAR3, VAR4]:
             gres.append(token)
 
         elif ptype == STRING:
             gres.append(token)
 
-        elif ptype == ELSE:
-            stack.append(T_ELSE)
+        elif ptype == IFSEND:
+            gres.append(A_IF)
 
-        elif ptype == ENDIF:
-            stack.append(T_ENDIF)
+        elif ptype == ELSESEND:
+            extract_block(A_IF) #THEN-block
+            gres.append(A_ELSE)
 
-        elif ptype == ENDWHILE:
-            stack.append(T_ENDWHILE)
+        elif ptype == ENDIFSEND:
+            extract_block(A_ELSE)
+            elseblock = gres.pop()
+            thenblock = gres.pop()
+            oper = (A_IF, [global_stack.pop(), thenblock, elseblock])
+            # print (op)
+            gres.append(oper)
 
-        elif ptype == ENDFUNC:
-            stack.append(T_ENDFUNC)
+        elif ptype == ENDFUNCSEND:
+            extract_block(A_FUNCTION)
+            block = gres.pop()
+            op = (A_FUNCTION, [func, block])
+            gres.append(op)
 
-        elif ptype == RETURN:
-            stack.append(T_RETURN)
+        elif ptype == ASSIGNSEND:
+            oper = (A_ASSIGN, [gres.pop(), global_stack.pop()])
+            gres.append(oper)
 
-        elif ptype == PRINT:
-            stack.append(ctype)
+        elif ptype == RETURNSEND:
+            oper = (A_RETURN, gres.pop())
+            gres.append(oper)
+
+        elif ptype == PRINTSEND:
+            oper = (A_PRINT, gres.pop())
+            gres.append(oper)
+
+        elif ptype == READSEND:
+            oper = (A_READ, gres.pop())
+            gres.append(oper)
+
+        elif ptype == WHILESEND:
+            gres.append(A_WHILE)
+
+        elif ptype == ENDWHILESEND:
+            extract_block(A_WHILE)
+            block = gres.pop()
+            op = (A_WHILE, [global_stack.pop(), block])
+            gres.append(op)
 
         
         waitfor = links[ptype][0]
