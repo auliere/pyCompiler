@@ -1,5 +1,6 @@
+	read k;
 	N = 1;
-	while N<=4:
+	while N<=k:
 		print N;
 		print "\n";
 		N = N+1;

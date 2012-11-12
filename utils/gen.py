@@ -20,12 +20,17 @@ class TreeStats(object):
         self.use_print = False
         self.use_read = False
 
-def find_vars(t, stat=None, prefix=""):
+def find_vars(t, stat=None, func=None):
+    if func is not None:
+        prefix = func.name+"_"
+    else:
+        prefix = ""
+
     if stat == None:
         stat = TreeStats()
     if isinstance(t,list):
         for x in reversed(t):
-            find_vars(x, stat=stat, prefix=prefix)
+            find_vars(x, stat=stat, func=func)
     elif isinstance(t,tuple):
         if t[0] == A_PRINT:
             stat.use_print = True
@@ -33,16 +38,23 @@ def find_vars(t, stat=None, prefix=""):
             stat.use_read = True
         if t[0] == A_FUNCTION:
             stat.funcs[t[1][0].name] = {'args':t[1][0].args, 
-                                        'args_count': len(t[1][0].args)}
+                                        'args_count': len(t[1][0].args),
+                                        'info': t[1][0]}
             for v in t[1][0].args:
-                stat.vars.append("%s_%s" % (t[1][0].name, v))
-            find_vars(t[1][1], stat=stat, prefix=t[1][0].name+"_")
+                var = "%s_%s" % (t[1][0].name, v)
+                stat.vars.append(var)
+                t[1][0].inner_vars.append(var)
+
+            find_vars(t[1][1], stat=stat, func=t[1][0])
         else:
-            find_vars(t[1], stat=stat, prefix=prefix)
+            find_vars(t[1], stat=stat, func=func)
     else:
         if isinstance(t, str) and typeof(t) == T_VAR:
             if prefix+t not in stat.vars:
                 stat.vars.append(prefix+t)
+                if func is not None:
+                    func.inner_vars.append(prefix+t)
+
         if isinstance(t, str) and typeof(t) == T_STRING:
             if t not in stat.strs:
                 stat.strs.append(t)
@@ -260,11 +272,19 @@ def gen_text_section(t, stat, p=None, prefix=""):
                 raise ParserError("Call %s passing %d arguments. %d expected" % 
                     (node[1], len(node[2]), stat.funcs[node[1]]['args_count']))
             
+            for iv in stat.funcs[node[1]]['info'].inner_vars:
+                aa_push_addr(v="v%s" % iv)
+
             for arg in reversed(node[2]):
                 gen_text_section(arg, stat, p=p, prefix=prefix)
 
             aa_call(v="Func_%s" % node[1])
             aa_add(o=[C_OPT_NO, C_OPT_NO], v=["esp", str(4*len(node[2]))])
+
+            for iv in reversed(stat.funcs[node[1]]['info'].inner_vars):
+                aa_pop(v="edx")
+                aa_mov(o=[C_OPT_ADDR, C_OPT_NO], v=["v%s" % iv, "edx"])
+
             aa_push_num(v="eax")
 
         elif node[0] in ['/', '%']:

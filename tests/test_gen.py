@@ -95,3 +95,8 @@ class TestGenerator(object):
     def test_func_args_in(self):
         " functions arguments by value "
         assert_equal(self.run("50").strip(), '50')
+
+    @compile_src("t9.src")
+    def test_recursion(self):
+        " recursion test by fibbonacci numbers "
+        assert_equal(self.run("9").strip(), '34')

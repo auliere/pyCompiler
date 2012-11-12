@@ -140,6 +140,7 @@ class FunctionDescription(object):
     def __init__(self):
         self.name = None
         self.args = []
+        self.inner_vars = []
     def __repr__(self):
         return "%s%s" % (self.name, self.args)
 
@@ -181,6 +182,7 @@ def m_default():
             waitfor = links[ptype][0]
 
         ctype = typeof(token)
+
         # check syntax errors
         possibles = reduce(lambda a,b: a+b, [[] if links[x][1] == None else list(links[x][1]) for x in waitfor])
         if possibles is None:
@@ -285,7 +287,6 @@ def m_default():
             block = gres.pop()
             op = (A_WHILE, [global_stack.pop(), block])
             gres.append(op)
-
         
         waitfor = links[ptype][0]
 
