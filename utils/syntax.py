@@ -144,19 +144,12 @@ class FunctionDescription(object):
     def __repr__(self):
         return "%s%s" % (self.name, self.args)
 
-def m_default():
-    global gres, global_lex
-    ptype = START
-    waitfor = links[ptype][0]
+class Machine(object):
+    def __init__(self):
+        self.func = None
+        self.token = None
 
-    def istypeeq(token_type, state_type):
-        if state_type == None:
-            return True
-        else:
-            return token_type in links[state_type][1]
-
-    def extract_block(stop):
-        global gres
+    def extract_block(self, stop):
         group = []
         while True:
             if not len(gres)>0:
@@ -168,10 +161,94 @@ def m_default():
                 break
         gres.append((A_BLOCK, group))
 
+    def do_function(self):
+        self.func = FunctionDescription()
+
+    def do_func_name(self):
+        self.func.name = self.token
+
+    def do_func_arg(self):
+        self.func.args.append(self.token)
+
+    def do_func_args_end(self):
+        gres.append(A_FUNCTION)
+
+    def do_beg(self):
+        gres.append(A_BLOCK)
+
+    def do_end(self):
+        group = []
+        self.extract_block(A_BLOCK)
+        if len(group)>0:
+            gres.append((A_BLOCK, group))
+
+    def do_var(self):
+        gres.append(self.token)
+
+    def do_string(self):
+        gres.append(self.token)
+
+    def do_ifsend(self):
+        gres.append(A_IF)
+
+    def do_elsesend(self):
+        self.extract_block(A_IF) #THEN-block
+        gres.append(A_ELSE)
+
+    def do_endifsend(self):
+        self.extract_block(A_ELSE)
+        elseblock = gres.pop()
+        thenblock = gres.pop()
+        oper = (A_IF, [global_stack.pop(), thenblock, elseblock])
+        # print (op)
+        gres.append(oper)
+
+    def do_endfuncsend(self):
+        self.extract_block(A_FUNCTION)
+        block = gres.pop()
+        op = (A_FUNCTION, [self.func, block])
+        gres.append(op)
+
+    def do_assignsend(self):
+        oper = (A_ASSIGN, [gres.pop(), global_stack.pop()])
+        gres.append(oper)
+
+    def do_returnsend(self):
+        oper = (A_RETURN, gres.pop())
+        gres.append(oper)
+
+    def do_printsend(self):
+        oper = (A_PRINT, gres.pop())
+        gres.append(oper)
+
+    def do_readsend(self):
+        oper = (A_READ, gres.pop())
+        gres.append(oper)
+
+    def do_whilesend(self):
+        gres.append(A_WHILE)
+
+    def do_endwhilesend(self):
+        self.extract_block(A_WHILE)
+        block = gres.pop()
+        op = (A_WHILE, [global_stack.pop(), block])
+        gres.append(op)
+
+def m_default():
+    ptype = START_NODE
+    waitfor = links[ptype][0]
+
+    def istypeeq(token_type, state_type):
+        if state_type == None:
+            return True
+        else:
+            return token_type in links[state_type][1]
+
     stack = []
     gres.append(A_BLOCK)
     current_line = -1
-    func = None
+    # func = None
+    state_executor = Machine()
 
     while True:
         token = (yield)
@@ -184,7 +261,8 @@ def m_default():
         ctype = typeof(token)
 
         # check syntax errors
-        possibles = reduce(lambda a,b: a+b, [[] if links[x][1] == None else list(links[x][1]) for x in waitfor])
+        possibles = reduce(lambda a,b: a+b, [[] if links[x][1] == None else list(links[x][1])
+                                             for x in waitfor])
         if possibles is None:
             possibles = []
         else:
@@ -215,80 +293,17 @@ def m_default():
 
         #Process state
 
-        if ptype == FUNCTION:
-            func = FunctionDescription()
-
-        elif ptype == FUNCNAME:
-            func.name = token
-
-        elif ptype == FUNCARG:
-            func.args.append(token)
-
-        elif ptype == FUNCARGSEND:
-            gres.append(A_FUNCTION)
-
-        elif ptype == BEG:
-            gres.append(A_BLOCK)
-
-        elif ptype == END:
-            group = []
-            extract_block(A_BLOCK)
-            if len(group)>0:
-                gres.append((A_BLOCK, group))
-
-        elif ptype in [VAR1, VAR2, VAR3, VAR4]:
-            gres.append(token)
-
-        elif ptype == STRING:
-            gres.append(token)
-
-        elif ptype == IFSEND:
-            gres.append(A_IF)
-
-        elif ptype == ELSESEND:
-            extract_block(A_IF) #THEN-block
-            gres.append(A_ELSE)
-
-        elif ptype == ENDIFSEND:
-            extract_block(A_ELSE)
-            elseblock = gres.pop()
-            thenblock = gres.pop()
-            oper = (A_IF, [global_stack.pop(), thenblock, elseblock])
-            # print (op)
-            gres.append(oper)
-
-        elif ptype == ENDFUNCSEND:
-            extract_block(A_FUNCTION)
-            block = gres.pop()
-            op = (A_FUNCTION, [func, block])
-            gres.append(op)
-
-        elif ptype == ASSIGNSEND:
-            oper = (A_ASSIGN, [gres.pop(), global_stack.pop()])
-            gres.append(oper)
-
-        elif ptype == RETURNSEND:
-            oper = (A_RETURN, gres.pop())
-            gres.append(oper)
-
-        elif ptype == PRINTSEND:
-            oper = (A_PRINT, gres.pop())
-            gres.append(oper)
-
-        elif ptype == READSEND:
-            oper = (A_READ, gres.pop())
-            gres.append(oper)
-
-        elif ptype == WHILESEND:
-            gres.append(A_WHILE)
-
-        elif ptype == ENDWHILESEND:
-            extract_block(A_WHILE)
-            block = gres.pop()
-            op = (A_WHILE, [global_stack.pop(), block])
-            gres.append(op)
+        if links[ptype][2] is not None:
+            action = getattr(state_executor, "do_%s" % links[ptype][2])
+            state_executor.token = token
+            action()
         
         waitfor = links[ptype][0]
+
+        #check instant states
+        if links[waitfor[0]][3]:
+            ptype = links[ptype][0][0]
+            waitfor = links[ptype][0]
 
         if len(waitfor) == 1 and waitfor[0] in EXPRESSIONS_STATES:
             m = m_expressions()

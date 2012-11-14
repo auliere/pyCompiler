@@ -1,0 +1,90 @@
+1 IDENT - var
+2 "="
+3 EXPR
+4 ";" - assignsend
+5 "{" - beg
+6 "}" - end
+7 START
+8 "print"
+9 IDENT - var
+10 STRING - string
+11 ";" - printsend
+12 "read"
+13 IDENT - var
+14 ";" - readsend
+15 "if"
+16 EXPR
+17 ":" - ifsend
+18 "else"
+19 ":" - elsesend
+20 "endif"
+21 ";" - endifsend
+22 "while"
+23 EXPR
+24 ":" - whilesend
+25 "endwhile"
+26 ";" - endwhilesend
+27 "function" - function
+28 IDENT - func_name
+29 "("
+30 ")" - func_args_end
+31 IDENT - func_arg
+32 ","
+33 "endfunc"
+34 ";" - endfuncsend
+35 "return"
+36 IDENT - var
+37 ";" - returnsend
+#
+1 2
+2 3
+3 4
+7 5
+7 6
+7 1
+7 8
+8 9
+8 10
+9 11
+10 11
+12 13
+7 12
+13 14
+7 15
+15 16
+16 17
+18 19
+7 18
+7 20
+20 21
+7 22
+22 23
+23 24
+7 25
+25 26
+27 28
+7 27
+28 29
+29 31
+29 30
+31 32
+32 31
+31 30
+7 33
+33 34
+30 7
+34 7
+26 7
+24 7
+21 7
+19 7
+17 7
+14 7
+11 7
+4 7
+6 7
+5 7
+7 35
+35 36
+36 37
+37 7
