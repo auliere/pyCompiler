@@ -80,7 +80,9 @@ def m_expressions():
         if token_type not in [T_OPEREND, T_CTRLEND] + EXPRESSIONS_TOKENS:
             raise ParserError('Syntax error on line %d' % current_line)
 
+        #state machine
         if token_type in [T_VAR, T_NUMBER]:
+            #"var" state
             res.append(token)
             #FIXME: replace by logging
             if DEBUG:
@@ -89,8 +91,10 @@ def m_expressions():
 
         if token_type in [T_POPEN, ]: #parentheses or function call
             if (len(res) > 0) and typeof(res[-1]) == T_VAR:
+                # "call" state
                 stack.append(FunctionCallInfo(res.pop(), len(res)))
             else:
+                # "par_open"
                 stack.append(token)
             if DEBUG:
                 print (stack, res)
@@ -106,6 +110,7 @@ def m_expressions():
         if token_type in [T_PCLOSE, ]:
             oper = stack.pop()
             if typeof(oper) == T_CALL:
+                # "call_end" state
                 assert isinstance(oper, FunctionCallInfo)
                 #function
                 args_count = len(res)-oper.args
