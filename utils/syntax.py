@@ -38,6 +38,9 @@ global_stack = []
 gres = []
 global_lex = []
 
+class ExprMachine(object):
+    pass
+
 def m_expressions():
     " Machine for expression analysis "
     global global_lex
