@@ -8,6 +8,7 @@ import os
 import subprocess
 import functools
 
+
 def compile_src(f_name):
     def _compile(func):
         @functools.wraps(func)
@@ -17,6 +18,7 @@ def compile_src(f_name):
             os.remove(self.bin)
         return __compile
     return _compile
+
 
 class TestGenerator(object):
     @classmethod
@@ -40,7 +42,7 @@ class TestGenerator(object):
         p = gen_code(tree, find_vars(tree))
 
         lines = gen_real_asm(p, 'TEST')
-        
+
         f = file(asm, 'w')
         for line in lines:
             print>>f, line
@@ -49,13 +51,15 @@ class TestGenerator(object):
         o = os.path.join(os.getcwd(), 'tests/test_set/', f_name) + '.o'
         bin = os.path.join(os.getcwd(), 'tests/test_set/', f_name) + '.bin'
         subprocess.check_call('nasm -f elf %s -o %s' % (asm, o), shell=True)
-        subprocess.check_call('ld -s -dynamic-linker /lib/ld-linux.so.2 -lc %s -o %s' % (o, bin), shell=True)
+        subprocess.check_call('ld -s -dynamic-linker /lib/ld-linux.so.2 -lc %s -o %s' %
+                              (o, bin), shell=True)
         os.remove(asm)
         os.remove(o)
         return bin
 
     def run(self, in_data=None):
-        proc = subprocess.Popen(self.bin, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        proc = subprocess.Popen(self.bin, shell=True,
+                                stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         return proc.communicate(in_data)[0]
 
     @compile_src("t1.src")

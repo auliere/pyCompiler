@@ -15,6 +15,7 @@ machine = []
 
 DEBUG = False
 
+
 def synt(lex):
     " Builds syntax tree "
     global global_lex, global_stack, gres
@@ -23,7 +24,7 @@ def synt(lex):
     gres = []
     def_machine = m_default()
     def_machine.next()
-    #INIT
+    # INIT
     machine.append(def_machine)
 
     global_lex = list(reversed(lex))
@@ -38,6 +39,7 @@ global_stack = []
 gres = []
 global_lex = []
 
+
 def m_expressions():
     " Machine for expression analysis "
     global global_lex
@@ -45,25 +47,25 @@ def m_expressions():
     res = []
 
     weights = {
-                T_POPEN: 0,
-                T_CALL: 0,
-                T_PCLOSE: 1,
-                T_SEPARATOR: 2,
-                T_PLUS: 20,
-                T_MINUS: 20,
-                T_IMUL: 10,
-                T_IDIV: 10,
-                T_MOD: 10,
+        T_POPEN: 0,
+        T_CALL: 0,
+        T_PCLOSE: 1,
+        T_SEPARATOR: 2,
+        T_PLUS: 20,
+        T_MINUS: 20,
+        T_IMUL: 10,
+        T_IDIV: 10,
+        T_MOD: 10,
 
-                T_GT: 5,
-                T_LT: 5,
-                T_GE: 5,
-                T_LE: 5,
-                T_EQ: 5,
+        T_GT: 5,
+        T_LT: 5,
+        T_GE: 5,
+        T_LE: 5,
+        T_EQ: 5,
 
-                T_OPEREND: -9000,
-                T_CTRLEND: -9000,
-              }
+        T_OPEREND: -9000,
+        T_CTRLEND: -9000,
+    }
 
     current_line = -1
 
@@ -82,12 +84,12 @@ def m_expressions():
 
         if token_type in [T_VAR, T_NUMBER]:
             res.append(token)
-            #FIXME: replace by logging
+            # FIXME: replace by logging
             if DEBUG:
                 print (stack, res)
             continue
 
-        if token_type in [T_POPEN, ]: #parentheses or function call
+        if token_type in [T_POPEN, ]:  # parentheses or function call
             if (len(res) > 0) and typeof(res[-1]) == T_VAR:
                 stack.append(FunctionCallInfo(res.pop(), len(res)))
             else:
@@ -107,8 +109,8 @@ def m_expressions():
             oper = stack.pop()
             if typeof(oper) == T_CALL:
                 assert isinstance(oper, FunctionCallInfo)
-                #function
-                args_count = len(res)-oper.args
+                # function
+                args_count = len(res) - oper.args
                 if DEBUG:
                     print (oper, args_count, res[-args_count:])
                 if args_count > 0:
@@ -116,17 +118,17 @@ def m_expressions():
                     del res[-args_count:]
                 else:
                     args = []
-                res.append( (A_CALL, oper, args) )
+                res.append((A_CALL, oper, args))
 
-            if DEBUG: 
+            if DEBUG:
                 print (stack, res)
             continue
 
-        if len(stack)==0 or (weights[token_type] > weights[typeof(stack[-1])]):
+        if len(stack) == 0 or (weights[token_type] > weights[typeof(stack[-1])]):
             if token_type != T_SEPARATOR:
                 stack.append(token)
 
-        if DEBUG: 
+        if DEBUG:
             print (stack, res)
 
         if token_type not in EXPRESSIONS_TOKENS:
@@ -136,13 +138,16 @@ def m_expressions():
             global_stack.append(res)
             global_lex.append(token)
 
+
 class FunctionDescription(object):
     def __init__(self):
         self.name = None
         self.args = []
         self.inner_vars = []
+
     def __repr__(self):
         return "%s%s" % (self.name, self.args)
+
 
 class Machine(object):
     def __init__(self):
@@ -152,7 +157,7 @@ class Machine(object):
     def extract_block(self, stop):
         group = []
         while True:
-            if not len(gres)>0:
+            if not len(gres) > 0:
                 raise ParserError("Syntax error: invalid block")
             last = gres.pop()
             if last != stop:
@@ -179,7 +184,7 @@ class Machine(object):
     def do_end(self):
         group = []
         self.extract_block(A_BLOCK)
-        if len(group)>0:
+        if len(group) > 0:
             gres.append((A_BLOCK, group))
 
     def do_var(self):
@@ -192,7 +197,7 @@ class Machine(object):
         gres.append(A_IF)
 
     def do_elsesend(self):
-        self.extract_block(A_IF) #THEN-block
+        self.extract_block(A_IF)  # THEN-block
         gres.append(A_ELSE)
 
     def do_endifsend(self):
@@ -234,6 +239,7 @@ class Machine(object):
         op = (A_WHILE, [global_stack.pop(), block])
         gres.append(op)
 
+
 def m_default():
     ptype = START_NODE
     waitfor = links[ptype][0]
@@ -255,14 +261,14 @@ def m_default():
         if hasattr(token, 'line'):
             current_line = token.line
 
-        if ptype in EXPRESSIONS_STATES: # processed in other machine, so waiting for ';' or ':'
+        if ptype in EXPRESSIONS_STATES:  # processed in other machine, so waiting for ';' or ':'
             waitfor = links[ptype][0]
 
         ctype = typeof(token)
 
         # check syntax errors
-        possibles = reduce(lambda a,b: a+b, [[] if links[x][1] == None else list(links[x][1])
-                                             for x in waitfor])
+        possibles = reduce(lambda a, b: a + b, [[] if links[x][1] == None else list(links[x][1])
+                                                for x in waitfor])
         if possibles is None:
             possibles = []
         else:
@@ -272,13 +278,13 @@ def m_default():
             raise ParserError('Syntax error on line %d' % current_line)
         if ctype == T_NO and token != None:
             # FIXME: dead code?
-            raise ParserError("Unknown token '%s' on line %d" % (token, current_line))
+            raise ParserError(
+                "Unknown token '%s' on line %d" % (token, current_line))
 
-        
-        #Next state
+        # Next state
         possibles = []
-        
-        if len(waitfor) == 1: #single transition
+
+        if len(waitfor) == 1:  # single transition
             possibles.append(waitfor[0])
         else:
             for possible in waitfor:
@@ -291,16 +297,16 @@ def m_default():
 
         ptype = possibles[0]
 
-        #Process state
+        # Process state
 
         if links[ptype][2] is not None:
             action = getattr(state_executor, "do_%s" % links[ptype][2])
             state_executor.token = token
             action()
-        
+
         waitfor = links[ptype][0]
 
-        #check instant states
+        # check instant states
         if links[waitfor[0]][3]:
             ptype = links[ptype][0][0]
             waitfor = links[ptype][0]
@@ -312,15 +318,16 @@ def m_default():
             stack.append(ctype)
             ptype = waitfor[0]
 
+
 def print_tree(t, n=0, f=sys.stdout):
-    if isinstance(t,list):
+    if isinstance(t, list):
         for x in reversed(t):
             print_tree(x, n, f=f)
-    elif isinstance(t,tuple):
+    elif isinstance(t, tuple):
         if t[0] in NAMES:
-            print("--"*n, NAMES[t[0]], file=f)
+            print("--" * n, NAMES[t[0]], file=f)
         else:
-            print("--"*n, t[0], file=f)
-        print_tree(t[1], n=n+1, f=f)
+            print("--" * n, t[0], file=f)
+        print_tree(t[1], n=n + 1, f=f)
     else:
-        print("--"*n,t, file=f)
+        print("--" * n, t, file=f)

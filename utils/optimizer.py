@@ -2,29 +2,32 @@
 from utils.const import *
 from utils.gen import PseudoAsm
 
+
 def optimize(pseudo, num=2):
     text = pseudo
     for x in xrange(num):
         text = do_optimize(text)
     return text
 
+
 def do_optimize(pseudo):
     pseudo = PseudoAsm(pseudo)
-    
+
     text = pseudo.text
     text = optimize_push_pop(text)
     text = optimize_mov(text)
     text = optimize_mov_push(text)
     text = optimize_mov_to_self(text)
     text = optimize_clean_lines(text)
-    
+
     pseudo.text = text
     return pseudo
+
 
 def optimize_mov_to_self(text):
     " reduce mov (mov eax,eax) "
     result = []
-    for i,op in enumerate(text):
+    for i, op in enumerate(text):
         if op[0] == C_MOV:
             if (op[2][0] == op[2][1]) and (op[1][0] == op[1][1]):
                 pass
@@ -34,14 +37,17 @@ def optimize_mov_to_self(text):
             result.append(op)
     return result
 
+
 def optimize_push_pop(text):
     " reduce push and pop sequences "
     stack = []
     result = []
     ires = []
-    for i,op in enumerate(text):
-        if len(op)>3: offset = op[3]
-        else: offset = 0
+    for i, op in enumerate(text):
+        if len(op) > 3:
+            offset = op[3]
+        else:
+            offset = 0
 
         if op[0] == C_PUSH:
             stack.append(op)
@@ -51,12 +57,14 @@ def optimize_push_pop(text):
                 can_reduce = True
                 for s in ires:
                     if s[0] == C_MOV:
-                        can_reduce = can_reduce and (s[2][0] != v[2]) and (s[2][1] != v[2])
-                
+                        can_reduce = can_reduce and (
+                            s[2][0] != v[2]) and (s[2][1] != v[2])
+
                 if can_reduce:
-                    ires.append( (C_MOV, [C_OPT_NO, v[1]], (op[2],v[2]), offset) )
+                    ires.append(
+                        (C_MOV, [C_OPT_NO, v[1]], (op[2], v[2]), offset))
                 else:
-                    ires.insert(0,v)
+                    ires.insert(0, v)
                     ires.append(op)
             else:
                 ires.append(op)
@@ -71,21 +79,25 @@ def optimize_push_pop(text):
     result += stack
     return result
 
+
 def optimize_mov(text):
     " reduce mov twice (mov eax, 5; mov ebx, eax)"
     prev_mov = None
     result = []
     comments = []
-    for i,op in enumerate(text):
-        if len(op)>3: offset = op[3]
-        else: offset = 0
+    for i, op in enumerate(text):
+        if len(op) > 3:
+            offset = op[3]
+        else:
+            offset = 0
 
         if op[0] == C_MOV:
             if prev_mov is not None:
                 v = prev_mov
                 if (v[2][0] == op[2][1]) and (v[1][0] == op[1][1]) and \
                    (not (op[1][0] == v[1][1] and op[1][0] == C_OPT_ADDR)):
-                    result.append( (C_MOV, [op[1][0], v[1][1]], (op[2][0], v[2][1]), offset) )
+                    result.append((C_MOV, [op[1][0], v[
+                                  1][1]], (op[2][0], v[2][1]), offset))
                     prev_mov = None
                 else:
                     result.append(prev_mov)
@@ -105,15 +117,18 @@ def optimize_mov(text):
         result += prev_mov
     return result
 
+
 def optimize_mov_push(text):
     " reduce mov before push (mov eax, 5; push eax) "
     prev_mov = None
     result = []
     comments = []
     ires = []
-    for i,op in enumerate(text):
-        if len(op)>3: offset = op[3]
-        else: offset = 0
+    for i, op in enumerate(text):
+        if len(op) > 3:
+            offset = op[3]
+        else:
+            offset = 0
 
         if op[0] == C_MOV:
             if prev_mov is not None:
@@ -123,7 +138,7 @@ def optimize_mov_push(text):
             if prev_mov is not None:
                 v = prev_mov
                 if (v[2][0] == op[2]) and (v[1][0] == op[1]) and (v[1][0] != C_OPT_ADDR):
-                    ires.append( (C_PUSH, v[1][1], v[2][1], offset ) )
+                    ires.append((C_PUSH, v[1][1], v[2][1], offset))
                 else:
                     ires.append(prev_mov)
                     ires.append(op)
@@ -145,10 +160,11 @@ def optimize_mov_push(text):
         result += prev_mov
     return result
 
+
 def optimize_clean_lines(text):
     result = []
     n = 0
-    for i,op in enumerate(text):
+    for i, op in enumerate(text):
         if op[0] == C_COMMENT:
             if op[2] == None or op[2] == "":
                 n += 1

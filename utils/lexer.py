@@ -2,17 +2,19 @@ import string
 
 from utils import ParserError
 
+
 class Token(str):
     def __new__(cls, val, line):
         s = super(Token, cls).__new__(cls, val)
         s.line = line
         return s
 
+
 def lex(text):
     global line_num
 
     NO, ALPHA, NUM, SYMB, CMDEND, QUOTE, QUOTE_end, COMMENT = range(8)
-        
+
     line_num = 1
 
     def typeof(s, string=False):
@@ -25,7 +27,7 @@ def lex(text):
             return SYMB
         elif s[0] in [';']:
             return CMDEND
-        elif s[0] in ['"','\'']:
+        elif s[0] in ['"', '\'']:
             return QUOTE
         elif s[0] in ['#']:
             return COMMENT
@@ -33,11 +35,12 @@ def lex(text):
             return NO
         else:
             if not string:
-                raise ParserError("Unknown symbol %s on line %d" % (s, line_num))
+                raise ParserError(
+                    "Unknown symbol %s on line %d" % (s, line_num))
 
-    def symb_check(t,s):
+    def symb_check(t, s):
         COMBINATIONS = ('>=', '<=', '**', )
-        return (string.strip(string.join(t, ''))+s) in COMBINATIONS
+        return (string.strip(string.join(t, '')) + s) in COMBINATIONS
 
     all_tokens = []
     token = []
@@ -71,17 +74,17 @@ def lex(text):
             inline_comment = True
             continue
         if ((prev_type == current_type) or (prev_type == ALPHA and current_type == NUM)) \
-            and (current_type != SYMB or symb_check(token, s)):
+                and (current_type != SYMB or symb_check(token, s)):
             token.append(s)
         else:
             if prev_type != NO:
                 clear_token = string.strip(string.join(token, ''))
-                if len(clear_token)>0:
+                if len(clear_token) > 0:
                     all_tokens.append(Token(clear_token, line_num))
             prev_type = current_type
             token = [s]
 
     clear_token = string.strip(string.join(token, ''))
-    if len(clear_token)>0:
+    if len(clear_token) > 0:
         all_tokens.append(clear_token)
     return all_tokens

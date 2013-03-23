@@ -3,6 +3,7 @@ from utils import ParserError
 
 from nose.tools import assert_equal, raises
 
+
 class TestLexer(object):
     @classmethod
     def setup_class(klass):
@@ -20,7 +21,7 @@ class TestLexer(object):
 
     def test_smoke(self):
         s = ' v 1; "1  10 2" \nx=10;'
-        assert_equal(lex(s), ['v', '1',';', '"1  10 2"','x','=','10',';'])
+        assert_equal(lex(s), ['v', '1', ';', '"1  10 2"', 'x', '=', '10', ';'])
 
     def test_quotes(self):
         s = '"x;  123"'
@@ -37,7 +38,7 @@ class TestLexer(object):
 
     def test_comment(self):
         s = 'x #text\n 1'
-        assert_equal(lex(s), ['x','1'])
+        assert_equal(lex(s), ['x', '1'])
 
     def test_combined_vars(self):
         s = 'x1 = 1 + y2'

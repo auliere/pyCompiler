@@ -1,11 +1,14 @@
-class ParserError(Exception): pass
+class ParserError(Exception):
+    pass
 
-import os, sys
+import os
+import sys
 
 from const import *
 
+
 def typeof(t):
-    if t == None:
+    if t is None:
         return T_NO
 
     if isinstance(t, FunctionCallInfo):
@@ -16,7 +19,8 @@ def typeof(t):
     if t.isalpha():
         if t in RESERVED_WORDS:
             return RESERVED_WORDS[t]
-        else: return T_VAR
+        else:
+            return T_VAR
     elif t.isdigit():
         return T_NUMBER
     elif t in SYMB_DICT:
@@ -28,14 +32,16 @@ def typeof(t):
     else:
         return T_NO
 
+
 class FunctionCallInfo(str):
     def __new__(cls, name, args):
         s = super(FunctionCallInfo, cls).__new__(cls, name)
         s.args = args
         return s
 
+
 def verbose_output(func):
-    """ 
+    """
     Suppresses output if --verbose was not set
     """
     def _verbose_output(*pargs, **kwargs):
@@ -45,8 +51,8 @@ def verbose_output(func):
             null_output = open(os.devnull, 'w')
             sys.stdout = null_output
         try:
-          ret = func(*pargs, **kwargs)
-          if not args.verbose:
+            ret = func(*pargs, **kwargs)
+            if not args.verbose:
                 sys.stdout = old_stdout
         except:
             #fallback
