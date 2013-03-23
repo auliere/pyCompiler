@@ -178,6 +178,8 @@ def main():
     parser.add_argument('-O0', action="store_true", help="no internal optimization")
     parser.add_argument('-n', '--no-optimize', action="store_true", help="no -O2 option for nasm")
     parser.add_argument('-a', '--all-intermediate', action="store_true", help="Synonym for -slAL")
+    parser.add_argument('--target', type=str, choices=["linux", "c2m"], default="linux",
+                        help="c2m target is Cyclone II based CPU")
 
     args = parser.parse_args()
     if args.all_intermediate: args.lex = args.asm = args.synt = args.lst = True
