@@ -1,0 +1,33 @@
+function uniform(a, b, x)
+	flag1 = 0;
+	if x >= a:
+		flag1 = 33;
+	else:
+		flag1 = 0;
+	endif;
+	flag2 = 1;
+	if x <= b:
+		flag2 = 33;
+	else:
+		flag2 = 1;
+	endif;
+	if flag1 = flag2:
+		res = b - a;
+	else:
+		res = 0;
+	endif;
+	return res;
+endfunc;
+
+read a;
+read b;
+read x;
+
+z = uniform(a, b, x);
+if z > 0:
+	print "1/";
+	print z;
+else:
+	print "0";
+endif;
+print "\n";
